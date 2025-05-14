@@ -1,0 +1,21 @@
+{
+  "name": "instagram-post-automation",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^1.9.0",
+    "dotenv": "^16.5.0",
+    "express": "^5.1.0",
+    "node-cron": "^4.0.5",
+    "puppeteer": "^24.8.2",
+    "sequelize": "^6.37.7",
+    "sqlite3": "^5.1.7"
+  }
+}
