@@ -9,9 +9,14 @@ async function downloadTikTokVideo(videoUrl) {
         no_watermark: true, // Set to true to download without watermark
       },
     });
-    console.log("Response:", response.data);
-    // Check if the response contains the video URL
-    console.dir(response.data, { depth: null });
+
+    const tiktokUrl = response.data?.data?.play; // Extract the video URL from the response
+
+    if (!tiktokUrl) {
+      throw new Error("Video URL not found in the response.");
+    }
+
+    console.log("Video URL:", tiktokUrl);
   } catch (error) {
     console.error("Error downloading TikTok video:", error.message);
   }
