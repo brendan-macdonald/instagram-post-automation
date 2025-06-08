@@ -14,6 +14,7 @@ app.get("/", (req, res) => {
 });
 
 // start the server
+// (Future) Add routes here: POST /tiktok, GET /status, etc.
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
