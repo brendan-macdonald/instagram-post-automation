@@ -7,13 +7,13 @@ const db = new sqlite3.Database(dbPath);
 const sampleData = [
   {
     url: "https://www.tiktok.com/@mrbeast/video/7505849400019717406",
-    caption: "Mr Beast Sample TikTok video 1",
-    filename: "sample1.mp4",
+    caption: "Andy Filips",
+    filename: "Andy.mp4",
   },
   {
     url: "https://www.tiktok.com/@mrbeast/video/7508056331211787551",
-    caption: "Mr Beast Sample TikTok video 2",
-    filename: "sample2.mp4",
+    caption: "Dalton Riggs",
+    filename: "Dalton.mp4",
   },
 ];
 // This script inserts sample TikTok data into the database
