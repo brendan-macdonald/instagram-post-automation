@@ -1,45 +1,112 @@
-const { getNextUnprocessedTikTok } = require("./db/getNextUnprocessed");
+const { getNextUnprocessedTikTok } = require("./utils/getNextUnprocessed");
 const { downloadTikTokVideo } = require("./utils/downloadTikTok");
+const { uploadToInstagram } = require("./utils/uploadToInstagram");
+const { transcodeVideo } = require("./utils/transcodeVideo");
 const sqlite3 = require("sqlite3").verbose();
 const path = require("path");
+require("dotenv").config();
 
-// connect to sqlite database
+//resolve database path
 const dbPath = path.resolve(__dirname, "db/tiktoks.db");
 console.log("Database path:", dbPath);
+
+// connect to sqlite database
 const db = new sqlite3.Database(dbPath);
 
-// fetch the next unprocessed TikTok video from the database
+//get local server public URL from ngrok
+const ngrokUrl = process.env.NGROK_PUBLIC_URL;
+
+if (!ngrokUrl) {
+  console.log("No NGROK_PUBLIC_URL found in .env");
+} else {
+  console.log("Loaded NGROK_PUBLIC_URL in index.js:", ngrokUrl);
+}
+
+// 1) fetch the next unprocessed TikTok video from the database
 getNextUnprocessedTikTok(async (err, row) => {
   if (err) {
     console.error("Error fetching unprocessed TikTok:", err);
-    return;
+    return process.exit(1);
   }
   if (!row) {
     console.log("No unprocessed TikTok videos found.");
-    return;
+    return process.exit(99);
   }
-  //process the TikTok video
+  //2) process/download the TikTok video
   const { id, url } = row;
   const outputFilename = `tiktok_${id}.mp4`;
 
   try {
     await downloadTikTokVideo(url, outputFilename);
 
-    // Update the database to mark this TikTok as downloaded
-    const db = new sqlite3.Database(dbPath);
+    //3) update the database to mark this TikTok as downloaded
     db.run(
       `UPDATE tiktoks SET downloaded =1, filename = ? WHERE id = ?`,
       [outputFilename, id],
-      (err) => {
+      async (err) => {
         if (err) {
           console.error("Error updating TikTok as downloaded:", err.message);
         } else {
           console.log(`TikTok video ${id} marked as downloaded.`);
+
+          //4) upload video to Instagram via Graph API
+          try {
+            const caption =
+              "Test upload to instagram via Graph API follow @zerotobuilt";
+
+            // Transcode video before uploading
+            const originalPath = path.resolve(
+              __dirname,
+              "downloads",
+              outputFilename
+            );
+            const transcodedFilename = `transcoded_${outputFilename}`;
+            const transcodedPath = path.resolve(
+              __dirname,
+              "downloads",
+              transcodedFilename
+            );
+
+            await transcodeVideo(originalPath, transcodedPath);
+
+            // Upload transcoded video
+            const uploadResult = await uploadToInstagram(
+              ngrokUrl,
+              transcodedFilename,
+              caption
+            );
+
+            // Only mark as posted if upload was successful
+            if (uploadResult && uploadResult.success) {
+              console.log("Instagram upload complete.");
+              db.run(
+                `UPDATE tiktoks SET posted = 1 WHERE id = ?`,
+                [id],
+                (err) => {
+                  if (err) {
+                    console.log(
+                      "Error updating tiktok as posted:",
+                      err.message
+                    );
+                  } else {
+                    console.log(`Tiktok video ${id} marked as posted.`);
+                  }
+                  db.close();
+                }
+              );
+            } else {
+              console.log("Instagram upload failed, not marking as posted.");
+              db.close();
+            }
+          } catch (uploadErr) {
+            console.log("Failed to upload to Instagram:", uploadErr.message);
+            db.close();
+          }
         }
-        db.close();
       }
     );
   } catch (downloadError) {
     console.error("Error downloading TikTok video:", downloadError);
+    db.close();
   }
 });

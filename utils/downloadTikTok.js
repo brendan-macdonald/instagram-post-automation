@@ -8,6 +8,14 @@ const path = require("path");
  */
 
 async function downloadTikTokVideo(videoUrl, filename) {
+  const outputPath = path.resolve(__dirname, "../downloads", filename);
+  
+  // Check if file already exists
+  if (fs.existsSync(outputPath)) {
+    console.log(`File ${filename} already exists, skipping download.`);
+    return;
+  }
+
   try {
     // Step 1: get the video URL from TikWM API
     const response = await axios.get("https://tikwm.com/api/", {
@@ -24,7 +32,6 @@ async function downloadTikTokVideo(videoUrl, filename) {
 
     console.log("Video URL:", tiktokUrl);
     //Step 2: prepare local file stream
-    const outputPath = path.resolve(__dirname, "../downloads", filename);
     const writer = fs.createWriteStream(outputPath);
 
     //Step 3: stream the video from url and save it to the local file
@@ -46,6 +53,7 @@ async function downloadTikTokVideo(videoUrl, filename) {
     });
   } catch (error) {
     console.error("Error downloading TikTok video:", error.message);
+    throw error;
   }
 }
 
