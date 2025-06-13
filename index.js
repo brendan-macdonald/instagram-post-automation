@@ -52,7 +52,8 @@ getNextUnprocessedTikTok(async (err, row) => {
           //4) upload video to Instagram via Graph API
           try {
             const caption =
-              "Test upload to instagram via Graph API follow @zerotobuilt";
+              "Follow @zerotobuilt for daily engineering / technology content ⚙️📲\n\n" +
+              "#manufacturing #engineer #invention #howitsmade #entrepreneur #engineeringlife #processengineering #mechanical_engineering #howitworks #engineering #construction #innovation #civilengineering #building #mechanicalengineering";
 
             // Transcode video before uploading
             const originalPath = path.resolve(
