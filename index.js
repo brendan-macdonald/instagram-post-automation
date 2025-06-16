@@ -93,11 +93,13 @@ getNextUnprocessedTikTok(async (err, row) => {
                     console.log(`Tiktok video ${id} marked as posted.`);
                   }
                   db.close();
+                  process.exit(0); // <-- Success
                 }
               );
             } else {
               console.log("Instagram upload failed, not marking as posted.");
               db.close();
+              process.exit(1); // <-- Failure
             }
           } catch (uploadErr) {
             console.log("Failed to upload to Instagram:", uploadErr.message);
