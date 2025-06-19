@@ -13,7 +13,7 @@ async function getFacebookPage() {
       }
     );
     console.log("Available Pages:", response.data.data);
-    return response.data.data[0].id;
+    return response.data.data[1].id;
   } catch (error) {
     console.error(
       "Error getting Facebook Page:",
