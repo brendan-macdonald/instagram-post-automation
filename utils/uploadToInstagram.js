@@ -67,7 +67,10 @@ async function uploadToInstagram(ngrokUrl, filename, caption) {
       }
     );
 
-    console.log("Video published successfully with ID:", publishResponse.data.id);
+    console.log(
+      "Video published successfully with ID:",
+      publishResponse.data.id
+    );
     return { success: true, id: publishResponse.data.id };
   } catch (error) {
     console.error("Error publishing media:", error);
@@ -91,6 +94,7 @@ async function waitForMediaReady(
     const res = await axios.get(
       `https://graph.facebook.com/v19.0/${containerId}?fields=status_code&access_token=${accessToken}`
     );
+    console.log(`Graph API Response:`, res.data);
     if (res.data.status_code === "FINISHED") {
       return true;
     }

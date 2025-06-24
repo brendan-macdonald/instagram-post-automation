@@ -13,6 +13,10 @@ console.log("Database path:", dbPath);
 // connect to sqlite database
 const db = new sqlite3.Database(dbPath);
 
+// get logo
+const logoPath = path.resolve(__dirname, "./assets", "zerotobuilt.jpg");
+// const logoPath = path.resolve(__dirname, "./assets", "cryptoguide.png");
+
 //get local server public URL from ngrok
 const ngrokUrl = process.env.NGROK_PUBLIC_URL;
 
@@ -55,6 +59,10 @@ getNextUnprocessedTikTok(async (err, row) => {
               "Follow @zerotobuilt for daily engineering / technology content ⚙️📲\n\n" +
               "#manufacturing #engineer #invention #howitsmade #entrepreneur #engineeringlife #processengineering #mechanical_engineering #howitworks #engineering #construction #innovation #civilengineering #building #mechanicalengineering";
 
+            // const caption =
+            //   "Follow @cryptoguide.us for daily crypto / memecoin content 🚀📲\n\n" +
+            //   "#crypto #bitcoin #btc #cryptocurrency #cryptonews #bitcoinnews #cryptotips #memecoin #memecoins #dogecoin #cryptomemes";
+
             // Transcode video before uploading
             const originalPath = path.resolve(
               __dirname,
@@ -68,7 +76,7 @@ getNextUnprocessedTikTok(async (err, row) => {
               transcodedFilename
             );
 
-            await transcodeVideo(originalPath, transcodedPath);
+            await transcodeVideo(originalPath, transcodedPath, logoPath);
 
             // Upload transcoded video
             const uploadResult = await uploadToInstagram(
@@ -104,6 +112,7 @@ getNextUnprocessedTikTok(async (err, row) => {
           } catch (uploadErr) {
             console.log("Failed to upload to Instagram:", uploadErr.message);
             db.close();
+            process.exit(1); // <-- Failure
           }
         }
       }
