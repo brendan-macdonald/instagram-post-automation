@@ -1,7 +1,7 @@
 const { spawn } = require("child_process");
 
 // Configurable cadence (in minutes)
-const POST_INTERVAL_MINUTES = 8;
+const POST_INTERVAL_MINUTES = 7;
 const POST_INTERVAL_MS = POST_INTERVAL_MINUTES * 60 * 1000;
 
 // Start the local server

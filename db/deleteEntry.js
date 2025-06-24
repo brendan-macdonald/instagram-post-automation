@@ -7,7 +7,7 @@ const db = new sqlite3.Database(dbPath);
 
 db.run(
   `DELETE FROM tiktoks
-    WHERE ID = 146`,
+    WHERE ID = 222`,
   function (err) {
     if (err) {
       console.error("Error clearing table:", err.message);
