@@ -1,4 +1,4 @@
-//Uses NGROK_PUBLIC_URL and video filename to construct a public video URL.
+//Uses CLOUDFLARE_PUBLIC_URL and video filename to construct a public video URL.
 //Creates a video container using the Instagram Graph API.
 //Waits 10 seconds to allow Instagram to process the video.
 //Publishes the video to Instagram Business account
@@ -15,12 +15,12 @@ if (!IG_ACCESS_TOKEN || !IG_USER_ID) {
 }
 
 //function uploads and publishes a video to reels using the graph api
-// @param {string} ngrokUrl - The public ngrok URL serving the local video files
+// @param {string} cloudflareUrl - The public cloudflareUrl serving the local video files
 // @param {string} filename - The name of the video file (e.g., tiktok_20.mp4)
 // @param {string} caption - The caption text to include in the Instagram post
 
-async function uploadToInstagram(ngrokUrl, filename, caption) {
-  const videoUrl = `${ngrokUrl}/downloads/${filename}`;
+async function uploadToInstagram(cloudflareUrl, filename, caption) {
+  const videoUrl = `${cloudflareUrl}/downloads/${filename}`;
   console.log("Video url:", videoUrl);
 
   //1) create video container
@@ -67,7 +67,10 @@ async function uploadToInstagram(ngrokUrl, filename, caption) {
       }
     );
 
-    console.log("Video published successfully with ID:", publishResponse.data.id);
+    console.log(
+      "Video published successfully with ID:",
+      publishResponse.data.id
+    );
     return { success: true, id: publishResponse.data.id };
   } catch (error) {
     console.error("Error publishing media:", error);
@@ -91,6 +94,7 @@ async function waitForMediaReady(
     const res = await axios.get(
       `https://graph.facebook.com/v19.0/${containerId}?fields=status_code&access_token=${accessToken}`
     );
+    console.log(`Graph API Response:`, res.data);
     if (res.data.status_code === "FINISHED") {
       return true;
     }
