@@ -17,13 +17,12 @@ const db = new sqlite3.Database(dbPath);
 const logoPath = path.resolve(__dirname, "./assets", "zerotobuilt.jpg");
 // const logoPath = path.resolve(__dirname, "./assets", "cryptoguide.png");
 
-//get local server public URL from ngrok
-const ngrokUrl = process.env.NGROK_PUBLIC_URL;
+//get local server public URL from CloudFlare
+const cloudflareUrl = process.env.CLOUDFLARE_PUBLIC_URL;
 
-if (!ngrokUrl) {
-  console.log("No NGROK_PUBLIC_URL found in .env");
-} else {
-  console.log("Loaded NGROK_PUBLIC_URL in index.js:", ngrokUrl);
+if (!cloudflareUrl) {
+  console.error("CLOUDFLARE_PUBLIC_URL is not set in .env");
+  process.exit(1);
 }
 
 // 1) fetch the next unprocessed TikTok video from the database
@@ -80,7 +79,7 @@ getNextUnprocessedTikTok(async (err, row) => {
 
             // Upload transcoded video
             const uploadResult = await uploadToInstagram(
-              ngrokUrl,
+              cloudflareUrl,
               transcodedFilename,
               caption
             );

@@ -7,6 +7,7 @@ const POST_INTERVAL_MS = POST_INTERVAL_MINUTES * 60 * 1000;
 // Start the local server
 const server = spawn("node", ["server/server.js"], {
   stdio: "inherit",
+  env: process.env,
 });
 
 // Track if server has errored or closed
@@ -14,6 +15,17 @@ let serverErrored = false;
 server.on("error", (err) => {
   console.error("Failed to start server:", err);
   serverErrored = true;
+  process.exit(1);
+});
+
+// Start Cloudflare Tunnel
+const tunnel = spawn("cloudflared", ["tunnel", "run", "my-tunnel"], {
+  stdio: "inherit",
+});
+
+// handle tunnel errors
+tunnel.on("error", (err) => {
+  console.error("Failed to start Cloudflare Tunnel:", err);
   process.exit(1);
 });
 
@@ -27,6 +39,7 @@ setTimeout(() => {
     );
     const upload = spawn("node", ["index.js"], {
       stdio: "inherit",
+      env: process.env,
     });
 
     upload.on("close", (code) => {
@@ -50,3 +63,10 @@ setTimeout(() => {
 
   postNextVideo(); // Start the loop
 }, 5000);
+
+// shutdown on Ctrl+C
+process.on("SIGINT", () => {
+  console.log("\nShutting down...");
+  server.kill();
+  process.exit(0);
+});
