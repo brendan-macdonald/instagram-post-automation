@@ -1,11 +1,18 @@
 [
-    {
-        "username": "zerotobuilt",
-        "ig_access_token": "EAARZB82ZA6LG8BO4hdeJnvC4emWvlbrlObZAYVSMIxYb39lZCmPr3N54Peycy0MVHZBZAB7wu4gOhGv97h9SGnufOyUOSHd8tGbpnhgPyZBnFPSArjVrle2r60DKLJ77fDzhjrjA1QcxZCXJ9SoH68SZCXSLW7DHI1ZBCZAml4cgW7IDd1L6HHxp58vBWVgPAZDZD",
-        "ig_user_id": "17841473031907205",
-        "logoPath": "./assets/zerotobuilt.jpg",
-        "caption": ""Follow @zerotobuilt for daily engineering / technology content ⚙️📲\n\n" +
-              "#manufacturing #engineer #invention #howitsmade #entrepreneur #engineeringlife #processengineering #mechanical_engineering #howitworks #engineering #construction #innovation #civilengineering #building #mechanicalengineering";",
-        "dbPath": ,
-    }
+  {
+    "username": "zerotobuilt",
+    "ig_access_token": "EAARZB82ZA6LG8BO4hdeJnvC4emWvlbrlObZAYVSMIxYb39lZCmPr3N54Peycy0MVHZBZAB7wu4gOhGv97h9SGnufOyUOSHd8tGbpnhgPyZBnFPSArjVrle2r60DKLJ77fDzhjrjA1QcxZCXJ9SoH68SZCXSLW7DHI1ZBCZAml4cgW7IDd1L6HHxp58vBWVgPAZDZD",
+    "ig_user_id": "17841473031907205",
+    "logoPath": "./assets/zerotobuilt.jpg",
+    "caption": "Follow @zerotobuilt for daily engineering / technology content ⚙️📲\n\n#manufacturing #engineer #invention #howitsmade #entrepreneur #engineeringlife #processengineering #mechanical_engineering #howitworks #engineering #construction #innovation #civilengineering #building #mechanicalengineering",
+    "dbPath": "./db/tiktoks_zerotobuilt.db"
+  },
+  {
+    "username": "cryptoguide.us",
+    "ig_access_token": "EAARZB82ZA6LG8BO7kNaP3oNKHhvbKkKfZBmSDmPBnmdCgpCDkbvo6qb3WIpTpgIe3YPKaalZAe3QiFK44hrsfa1hATZBjQjksQGLZBqOTQZAQiL2NIaZB7dGcM4jHIKlTKOQsW0A8tNZCEeY87PCtd4YI3sVBPbLZCd4BPWZA9Fbqtfdzu932joZAlGlZAhPZBuZBed6AZDZD",
+    "ig_user_id": "17841475373174816",
+    "logoPath": "./assets/cryptoguide.png",
+    "caption": "Follow @cryptoguide.us for daily crypto / memecoin content 🚀📲\n\n#crypto #bitcoin #btc #cryptocurrency #cryptonews #bitcoinnews #cryptotips #memecoin #memecoins #dogecoin #cryptomemes",
+    "dbPath": "./db/tiktoks_cryptoguide.db"
+  }
 ]

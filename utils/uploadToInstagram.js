@@ -3,23 +3,24 @@
 //Waits 10 seconds to allow Instagram to process the video.
 //Publishes the video to Instagram Business account
 const axios = require("axios");
-require("dotenv").config();
-
-//load credentials from .env
-const IG_ACCESS_TOKEN = process.env.IG_ACCESS_TOKEN;
-const IG_USER_ID = process.env.IG_USER_ID;
-//check if token/user id exists
-if (!IG_ACCESS_TOKEN || !IG_USER_ID) {
-  console.error("Missing IG_ACCESS_TOKEN or IG_USER_ID in .env");
-  process.exit(1);
-}
 
 //function uploads and publishes a video to reels using the graph api
 // @param {string} cloudflareUrl - The public cloudflareUrl serving the local video files
 // @param {string} filename - The name of the video file (e.g., tiktok_20.mp4)
 // @param {string} caption - The caption text to include in the Instagram post
+// @param {string} IG_ACCESS_TOKEN - Instagram access token for this account
+// @param {string} IG_USER_ID - Instagram user ID for this account
 
-async function uploadToInstagram(cloudflareUrl, filename, caption) {
+async function uploadToInstagram(
+  cloudflareUrl,
+  filename,
+  caption,
+  IG_ACCESS_TOKEN,
+  IG_USER_ID
+) {
+  if (!IG_ACCESS_TOKEN || !IG_USER_ID) {
+    throw new Error("Missing IG_ACCESS_TOKEN or IG_USER_ID for this account.");
+  }
   const videoUrl = `${cloudflareUrl}/downloads/${filename}`;
   console.log("Video url:", videoUrl);
 
