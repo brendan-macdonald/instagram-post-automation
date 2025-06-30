@@ -2,10 +2,18 @@ const fs = require("fs");
 const path = require("path");
 const sqlite3 = require("sqlite3").verbose();
 const csv = require("csv-parser");
-const { url } = require("inspector");
 
-const dbPath = path.resolve(__dirname, "tiktoks.db");
 const csvPath = path.resolve(__dirname, "tiktoks.csv");
+
+// define dbpath to import csv file
+const dbArg = process.argv[2];
+if (!dbArg) {
+  console.log("Use: node db/importCsv.js <dbPath>");
+  process.exit(1);
+}
+const dbPath = path.resolve(__dirname, dbArg);
+
+console.log("Using DB:", dbPath);
 
 const db = new sqlite3.Database(dbPath);
 

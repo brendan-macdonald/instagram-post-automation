@@ -1,67 +1,75 @@
+require("dotenv").config();
 const { getNextUnprocessedTikTok } = require("./utils/getNextUnprocessed");
 const { downloadTikTokVideo } = require("./utils/downloadTikTok");
 const { uploadToInstagram } = require("./utils/uploadToInstagram");
 const { transcodeVideo } = require("./utils/transcodeVideo");
 const sqlite3 = require("sqlite3").verbose();
 const path = require("path");
-require("dotenv").config();
 
-//resolve database path
-const dbPath = path.resolve(__dirname, "db/tiktoks.db");
-console.log("Database path:", dbPath);
+// Get per-account config from environment variables
+const dbPath = process.env.DB_PATH;
+const IG_ACCESS_TOKEN = process.env.IG_ACCESS_TOKEN;
+const IG_USER_ID = process.env.IG_USER_ID;
+const cloudflareUrl = process.env.CLOUDFLARE_PUBLIC_URL;
+const accountName = process.env.ACCOUNT_NAME || "unknown";
+const caption = process.env.CAPTION || "";
+const logoPath = process.env.LOGO_PATH
+  ? path.resolve(__dirname, process.env.LOGO_PATH)
+  : null;
+
+console.log(`[${accountName}] Received DB_PATH:`, dbPath);
+
+if (
+  !dbPath ||
+  !IG_ACCESS_TOKEN ||
+  !IG_USER_ID ||
+  !cloudflareUrl ||
+  !caption ||
+  !logoPath
+) {
+  console.error(`[${accountName}] Missing required environment variables.`);
+  process.exit(1);
+}
 
 // connect to sqlite database
 const db = new sqlite3.Database(dbPath);
 
-// get logo
-const logoPath = path.resolve(__dirname, "./assets", "zerotobuilt.jpg");
-// const logoPath = path.resolve(__dirname, "./assets", "cryptoguide.png");
-
-//get local server public URL from CloudFlare
-const cloudflareUrl = process.env.CLOUDFLARE_PUBLIC_URL;
-
-if (!cloudflareUrl) {
-  console.error("CLOUDFLARE_PUBLIC_URL is not set in .env");
-  process.exit(1);
-}
+console.log(`[${accountName}] Processing...`);
 
 // 1) fetch the next unprocessed TikTok video from the database
-getNextUnprocessedTikTok(async (err, row) => {
+getNextUnprocessedTikTok(dbPath, async (err, row) => {
   if (err) {
-    console.error("Error fetching unprocessed TikTok:", err);
+    console.error(`[${accountName}] Error fetching unprocessed TikTok:`, err);
     return process.exit(1);
   }
   if (!row) {
-    console.log("No unprocessed TikTok videos found.");
+    console.log(`[${accountName}] No unprocessed TikTok videos found.`);
     return process.exit(99);
   }
-  //2) process/download the TikTok video
+  // 2) process/download the TikTok video
   const { id, url } = row;
   const outputFilename = `tiktok_${id}.mp4`;
 
   try {
     await downloadTikTokVideo(url, outputFilename);
 
-    //3) update the database to mark this TikTok as downloaded
+    // 3) update the database to mark this TikTok as downloaded
     db.run(
-      `UPDATE tiktoks SET downloaded =1, filename = ? WHERE id = ?`,
+      `UPDATE tiktoks SET downloaded = 1, filename = ? WHERE id = ?`,
       [outputFilename, id],
       async (err) => {
         if (err) {
-          console.error("Error updating TikTok as downloaded:", err.message);
+          console.error(
+            `[${accountName}] Error updating TikTok as downloaded:`,
+            err.message
+          );
         } else {
-          console.log(`TikTok video ${id} marked as downloaded.`);
+          console.log(
+            `[${accountName}] TikTok video ${id} marked as downloaded.`
+          );
 
-          //4) upload video to Instagram via Graph API
+          // 4) upload video to Instagram via Graph API
           try {
-            const caption =
-              "Follow @zerotobuilt for daily engineering / technology content ⚙️📲\n\n" +
-              "#manufacturing #engineer #invention #howitsmade #entrepreneur #engineeringlife #processengineering #mechanical_engineering #howitworks #engineering #construction #innovation #civilengineering #building #mechanicalengineering";
-
-            // const caption =
-            //   "Follow @cryptoguide.us for daily crypto / memecoin content 🚀📲\n\n" +
-            //   "#crypto #bitcoin #btc #cryptocurrency #cryptonews #bitcoinnews #cryptotips #memecoin #memecoins #dogecoin #cryptomemes";
-
             // Transcode video before uploading
             const originalPath = path.resolve(
               __dirname,
@@ -77,39 +85,48 @@ getNextUnprocessedTikTok(async (err, row) => {
 
             await transcodeVideo(originalPath, transcodedPath, logoPath);
 
-            // Upload transcoded video
+            // Upload transcoded video, passing IG credentials
             const uploadResult = await uploadToInstagram(
               cloudflareUrl,
               transcodedFilename,
-              caption
+              caption,
+              IG_ACCESS_TOKEN,
+              IG_USER_ID
             );
 
             // Only mark as posted if upload was successful
             if (uploadResult && uploadResult.success) {
-              console.log("Instagram upload complete.");
+              console.log(`[${accountName}] Instagram upload complete.`);
               db.run(
                 `UPDATE tiktoks SET posted = 1 WHERE id = ?`,
                 [id],
                 (err) => {
                   if (err) {
                     console.log(
-                      "Error updating tiktok as posted:",
+                      `[${accountName}] Error updating tiktok as posted:`,
                       err.message
                     );
                   } else {
-                    console.log(`Tiktok video ${id} marked as posted.`);
+                    console.log(
+                      `[${accountName}] Tiktok video ${id} marked as posted.`
+                    );
                   }
                   db.close();
                   process.exit(0); // <-- Success
                 }
               );
             } else {
-              console.log("Instagram upload failed, not marking as posted.");
+              console.log(
+                `[${accountName}] Instagram upload failed, not marking as posted.`
+              );
               db.close();
               process.exit(1); // <-- Failure
             }
           } catch (uploadErr) {
-            console.log("Failed to upload to Instagram:", uploadErr.message);
+            console.log(
+              `[${accountName}] Failed to upload to Instagram:`,
+              uploadErr.message
+            );
             db.close();
             process.exit(1); // <-- Failure
           }
@@ -117,7 +134,10 @@ getNextUnprocessedTikTok(async (err, row) => {
       }
     );
   } catch (downloadError) {
-    console.error("Error downloading TikTok video:", downloadError);
+    console.error(
+      `[${accountName}] Error downloading TikTok video:`,
+      downloadError
+    );
     db.close();
   }
 });
