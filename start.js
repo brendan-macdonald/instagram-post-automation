@@ -35,18 +35,16 @@ console.log(`Waiting 5 seconds for server to start...`);
 setTimeout(() => {
   if (serverErrored) return;
 
-  // For each account, start a posting loop
-  accounts.forEach((account) => {
+  let finishedAccounts = 0;
+
+  accounts.forEach((account, i) => {
     const postNextVideo = () => {
       console.log(
         `\n[${new Date().toLocaleTimeString()}] Starting upload for ${
           account.username
         }...`
       );
-      console.log(
-        `[DEBUG] Spawning for ${account.username} with DB_PATH:`,
-        account.dbPath
-      );
+
       const upload = spawn("node", ["index.js"], {
         stdio: "inherit",
         env: {
@@ -63,6 +61,13 @@ setTimeout(() => {
       upload.on("close", (code) => {
         if (code === 99) {
           console.log(`✅ No more unprocessed videos for ${account.username}.`);
+          finishedAccounts++;
+          if (finishedAccounts === accounts.length) {
+            console.log("✅ All accounts finished. Shutting down...");
+            server.kill();
+            tunnel.kill();
+            process.exit(0);
+          }
         } else if (code === 0) {
           console.log(
             `✅ Upload successful for ${account.username}. Scheduling next upload in ${POST_INTERVAL_MINUTES} minutes.`
@@ -70,14 +75,14 @@ setTimeout(() => {
           setTimeout(postNextVideo, POST_INTERVAL_MS);
         } else {
           console.error(
-            `❌ Upload failed for ${account.name} with code ${code}. Will try again in ${POST_INTERVAL_MINUTES} minutes.`
+            `❌ Upload failed for ${account.username} with code ${code}. Will try again in ${POST_INTERVAL_MINUTES} minutes.`
           );
           setTimeout(postNextVideo, POST_INTERVAL_MS);
         }
       });
     };
 
-    postNextVideo(); // Start the loop for this account
+    setTimeout(postNextVideo, i * 2000);
   });
 }, 5000);
 
