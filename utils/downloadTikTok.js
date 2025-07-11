@@ -7,17 +7,24 @@ const path = require("path");
  * @returns {Promise<void>}
  */
 
-async function downloadTikTokVideo(videoUrl, filename) {
+async function downloadTikTokVideo(
+  videoUrl,
+  filename,
+  accountName = "unknown"
+) {
   const outputPath = path.resolve(__dirname, "../downloads", filename);
-  
+
   // Check if file already exists
   if (fs.existsSync(outputPath)) {
-    console.log(`File ${filename} already exists, skipping download.`);
+    console.log(
+      `[${accountName}] File ${filename} already exists, skipping download.`
+    );
     return;
   }
 
   try {
     // Step 1: get the video URL from TikWM API
+    console.log(`[${accountName}] Attempting to download TikTok: ${videoUrl}`);
     const response = await axios.get("https://tikwm.com/api/", {
       params: {
         url: videoUrl,
@@ -27,10 +34,11 @@ async function downloadTikTokVideo(videoUrl, filename) {
 
     const tiktokUrl = response.data?.data?.play; // Extract the video URL from the response
     if (!tiktokUrl) {
+      console.error(`[${accountName}] TikWM API response:`, response.data);
       throw new Error("Video URL not found in the response.");
     }
 
-    console.log("Video URL:", tiktokUrl);
+    console.log(`[${accountName}] Video URL: ${tiktokUrl}`);
     //Step 2: prepare local file stream
     const writer = fs.createWriteStream(outputPath);
 
@@ -43,16 +51,21 @@ async function downloadTikTokVideo(videoUrl, filename) {
     // Step 4: wait for the download to finish
     return new Promise((resolve, reject) => {
       writer.on("finish", () => {
-        console.log(`Video downloaded successfully: ${outputPath}`);
+        console.log(
+          `[${accountName}] Video downloaded successfully: ${outputPath}`
+        );
         resolve(outputPath);
       });
       writer.on("error", (error) => {
-        console.error("Error writing file:", error.message);
+        console.error(`[${accountName}] Error writing file:`, error.message);
         reject(error);
       });
     });
   } catch (error) {
-    console.error("Error downloading TikTok video:", error.message);
+    console.error(
+      `[${accountName}] Error downloading TikTok video:`,
+      error.message
+    );
     throw error;
   }
 }

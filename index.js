@@ -51,7 +51,7 @@ getNextUnprocessedTikTok(dbPath, async (err, row) => {
   const outputFilename = `tiktok_${id}.mp4`;
 
   try {
-    await downloadTikTokVideo(url, outputFilename);
+    await downloadTikTokVideo(url, outputFilename, accountName);
 
     // 3) update the database to mark this TikTok as downloaded
     db.run(
@@ -85,11 +85,14 @@ getNextUnprocessedTikTok(dbPath, async (err, row) => {
 
             await transcodeVideo(originalPath, transcodedPath, logoPath);
 
+            // Use DB caption if present and not empty, otherwise use account caption
+            const videoCaption = row.caption && row.caption.trim() ? row.caption : caption;
+
             // Upload transcoded video, passing IG credentials
             const uploadResult = await uploadToInstagram(
               cloudflareUrl,
               transcodedFilename,
-              caption,
+              videoCaption,
               IG_ACCESS_TOKEN,
               IG_USER_ID
             );
@@ -139,5 +142,6 @@ getNextUnprocessedTikTok(dbPath, async (err, row) => {
       downloadError
     );
     db.close();
+    process.exit(1);
   }
 });

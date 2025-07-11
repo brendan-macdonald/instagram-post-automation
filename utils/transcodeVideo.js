@@ -19,8 +19,8 @@ function transcodeVideo(inputPath, outputPath, logoPath) {
         "[bg][logo]overlay=x=(main_w-820)/2:y=120[bgWithLogo]",
         // 4. Scale video
         "[0:v]scale=820:-2[resized]",
-        // Speed up video by 1.1x
-        "[resized]setpts=PTS/1.1[spedupv]",
+        // Speed up video by 1.05x
+        "[resized]setpts=PTS/1.05[spedupv]",
         // 5. Overlay video centered on background, shifted down by 40px
         "[bgWithLogo][spedupv]overlay=(W-w)/2:(H-h)/2+80[final]",
       ])

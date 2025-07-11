@@ -14,5 +14,13 @@
     "logoPath": "./assets/cryptoguide.png",
     "caption": "Follow @cryptoguide.us for daily crypto / memecoin content 🚀📲\n\n#crypto #bitcoin #btc #cryptocurrency #cryptonews #bitcoinnews #cryptotips #memecoin #memecoins #dogecoin #cryptomemes",
     "dbPath": "./db/tiktoks_cryptoguide.db"
+  },
+  {
+    "username": "dailyrapscene",
+    "ig_access_token": "EAARZB82ZA6LG8BPEJNDoUZB0rqsTBVyWeZAKplSNKe3CZCR6Q6HQDW5vShMgtWPDR82aTf2ZCxhcBWefDomCZBZCTVvXFPncG7TDnN43HpXtAaOEqKlrCznN0VS4qOREZCAaVfyKfJtQ1rpPQWvHIGbat5ATjrOkyN65h3CxuMDgVZAYgwQ8ZAJ31xBZCRZCsEFZBYYVuZBKgZDZD",
+    "ig_user_id": "17841475585406680",
+    "logoPath": "./assets/dailyrapscene.png",
+    "caption": "Follow @dailyrapscene for daily iconic rap clips and freestyles 🔥📲\n\n#rap #rapper #hiphop #rapmusic #freestyle #trap #bars #drill #rapvideo #musicreels",
+    "dbPath": "./db/tiktoks_dailyrapscene.db"
   }
 ]
