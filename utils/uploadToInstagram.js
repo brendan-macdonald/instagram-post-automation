@@ -28,6 +28,14 @@ async function uploadToInstagram(
   let containerId;
   try {
     console.log("Creating video contianer...");
+    console.log("Request payload:", {
+      media_type: "REELS",
+      video_url: videoUrl,
+      caption: caption.substring(0, 100) + "...",
+      access_token: IG_ACCESS_TOKEN ? "***PRESENT***" : "MISSING",
+      user_id: IG_USER_ID,
+    });
+
     const containerResponse = await axios.post(
       `https://graph.facebook.com/v19.0/${IG_USER_ID}/media`,
       {
@@ -41,10 +49,12 @@ async function uploadToInstagram(
     containerId = containerResponse.data.id;
     console.log("Media container created:", containerId);
   } catch (err) {
-    console.log(
-      "Failed to create media container:",
-      err.response?.data || err.message
-    );
+    console.log("Failed to create media container:");
+    console.log("Status:", err.response?.status);
+    console.log("Status Text:", err.response?.statusText);
+    console.log("Error Data:", err.response?.data);
+    console.log("Error Message:", err.message);
+    console.log("Full Error:", JSON.stringify(err.response?.data, null, 2));
     throw err;
   }
 
@@ -74,7 +84,12 @@ async function uploadToInstagram(
     );
     return { success: true, id: publishResponse.data.id };
   } catch (error) {
-    console.error("Error publishing media:", error);
+    console.error(
+      "Error publishing media:",
+      error.response?.data || error.message
+    );
+    // Log the full error object for debugging
+    console.dir(error, { depth: null });
     return { success: false, error: error.message };
   }
 }
@@ -92,17 +107,39 @@ async function waitForMediaReady(
   intervalMs = 5000
 ) {
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-    const res = await axios.get(
-      `https://graph.facebook.com/v19.0/${containerId}?fields=status_code&access_token=${accessToken}`
-    );
-    console.log(`Graph API Response:`, res.data);
-    if (res.data.status_code === "FINISHED") {
-      return true;
+    try {
+      console.log(
+        `Checking media status (attempt ${attempt}/${maxAttempts})...`
+      );
+      const res = await axios.get(
+        `https://graph.facebook.com/v19.0/${containerId}?fields=status_code&access_token=${accessToken}`
+      );
+      console.log(`Graph API Response:`, res.data);
+
+      if (res.data.status_code === "FINISHED") {
+        console.log("✅ Media processing finished successfully");
+        return true;
+      }
+
+      if (res.data.status_code === "ERROR") {
+        console.log("❌ Media processing failed with status: ERROR");
+        throw new Error(
+          `Media processing failed with status: ${res.data.status_code}`
+        );
+      }
+
+      console.log(
+        `Media not ready (status: ${res.data.status_code}), waiting... (${attempt}/${maxAttempts})`
+      );
+      await new Promise((r) => setTimeout(r, intervalMs));
+    } catch (error) {
+      console.log(`❌ Error checking media status (attempt ${attempt}):`);
+      console.log("Status:", error.response?.status);
+      console.log("Status Text:", error.response?.statusText);
+      console.log("Error Data:", error.response?.data);
+      console.log("Error Message:", error.message);
+      throw error;
     }
-    console.log(
-      `Media not ready (status: ${res.data.status_code}), waiting... (${attempt}/${maxAttempts})`
-    );
-    await new Promise((r) => setTimeout(r, intervalMs));
   }
   throw new Error("Media not ready after polling.");
 }

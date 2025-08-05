@@ -5,6 +5,7 @@ const { uploadToInstagram } = require("./utils/uploadToInstagram");
 const { transcodeVideo } = require("./utils/transcodeVideo");
 const sqlite3 = require("sqlite3").verbose();
 const path = require("path");
+const fs = require("fs");
 
 // Get per-account config from environment variables
 const dbPath = process.env.DB_PATH;
@@ -86,7 +87,8 @@ getNextUnprocessedTikTok(dbPath, async (err, row) => {
             await transcodeVideo(originalPath, transcodedPath, logoPath);
 
             // Use DB caption if present and not empty, otherwise use account caption
-            const videoCaption = row.caption && row.caption.trim() ? row.caption : caption;
+            const videoCaption =
+              row.caption && row.caption.trim() ? row.caption : caption;
 
             // Upload transcoded video, passing IG credentials
             const uploadResult = await uploadToInstagram(
@@ -113,6 +115,17 @@ getNextUnprocessedTikTok(dbPath, async (err, row) => {
                     console.log(
                       `[${accountName}] Tiktok video ${id} marked as posted.`
                     );
+                    // Delete original and transcoded files
+                    try {
+                      fs.unlinkSync(originalPath);
+                      fs.unlinkSync(transcodedPath);
+                      console.log(`[${accountName}] Deleted video files.`);
+                    } catch (deleteErr) {
+                      console.log(
+                        `[${accountName}] Error deleting files:`,
+                        deleteErr.message
+                      );
+                    }
                   }
                   db.close();
                   process.exit(0); // <-- Success
