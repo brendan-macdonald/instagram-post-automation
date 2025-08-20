@@ -26,6 +26,7 @@ db.all("SELECT * FROM tiktoks", [], (err, rows) => {
     console.log(`  Created At: ${row.created_at}`);
     console.log(`  Downloaded: ${row.downloaded ? "Yes" : "No"}`);
     console.log(`  Posted: ${row.posted ? "Yes" : "No"}`);
+    console.log(`  Logo: ${row.logo ? "Yes" : "No"}`);
   });
   db.close();
 });

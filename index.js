@@ -84,7 +84,14 @@ getNextUnprocessedTikTok(dbPath, async (err, row) => {
               transcodedFilename
             );
 
-            await transcodeVideo(originalPath, transcodedPath, logoPath);
+            // Use logo/background if logo flag is 1, else pass null for logoPath and false for withLogo
+            const withLogo = row.logo !== 0; // treat null/undefined as true for backward compatibility
+            await transcodeVideo(
+              originalPath,
+              transcodedPath,
+              withLogo ? logoPath : null,
+              withLogo
+            );
 
             // Use DB caption if present and not empty, otherwise use account caption
             const videoCaption =
