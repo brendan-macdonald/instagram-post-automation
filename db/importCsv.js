@@ -19,20 +19,22 @@ const db = new sqlite3.Database(dbPath);
 
 db.serialize(() => {
   const insertCsv = db.prepare(`
-    INSERT INTO tiktoks (url, caption, filename, downloaded, posted)
-    VALUES (?, ?, ?, 0, 0)
-    `);
+    INSERT INTO tiktoks (url, caption, filename, downloaded, posted, logo)
+    VALUES (?, ?, ?, 0, 0, ?)
+  `);
 
   fs.createReadStream(csvPath)
     .pipe(csv())
     .on("data", (row) => {
-      const { url, caption } = row;
+      const { url, caption, logo } = row;
       if (!url) return;
 
       const filename = `tiktok_download_${Date.now()}.mp4`;
-      insertCsv.run(url, caption || "", filename);
+      // Default logo to 1 if not present, otherwise parseInt for 0/1
+      insertCsv.run(url, caption || "", filename, logo === "0" ? 0 : 1);
       console.log("Inserted:", url);
       console.log("Caption:", caption || "(none)");
+      console.log("Logo:", logo === "0" ? 0 : 1);
     })
     .on("end", () => {
       insertCsv.finalize();
