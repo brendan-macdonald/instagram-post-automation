@@ -1,26 +1,16 @@
-// Usage: node tests/testTwitterUrl.js "<tweet_url>" [basename]
-const { downloadTwitterVideo } = require("../utils/downloadTwitter");
-
+const { downloadTwitterVideo } = require("../utils/downloadTwitterVideo");
 const url = process.argv[2];
-const basename = process.argv[3] || "twitter_test";
+const base = process.argv[3] || "twitter_test";
 if (!url) {
-  console.log(
-    'Use: node tests/testTwitterUrl.js "https://x.com/user/status/..." [basename]'
-  );
+  console.log('Use: node test/testTwitterUrl.js "<tweet_url>" [basename]');
   process.exit(1);
 }
-
-(async () => {
-  try {
-    const { videoPath, caption } = await downloadTwitterVideo(
-      url,
-      basename,
-      "twitter-url-test"
-    );
+downloadTwitterVideo(url, base)
+  .then(({ videoPath, caption }) => {
     console.log("✅ Saved:", videoPath);
     console.log("Caption:", caption);
-  } catch (e) {
+  })
+  .catch((e) => {
     console.error("❌ Failed:", e.message);
     process.exit(1);
-  }
-})();
+  });

@@ -1,7 +1,7 @@
 // utils/getNextUnprocessed.js
 const sqlite3 = require("sqlite3").verbose();
 
-function getNextUnprocessed(dbPath, callback) {
+function getNextUnprocessedMedia(dbPath, callback) {
   const db = new sqlite3.Database(dbPath);
   db.get(
     `SELECT * FROM media_queue
@@ -15,4 +15,4 @@ function getNextUnprocessed(dbPath, callback) {
   );
 }
 
-module.exports = { getNextUnprocessed };
+module.exports = { getNextUnprocessedMedia };

@@ -11,22 +11,26 @@ const dbPath = path.resolve(__dirname, dbArg);
 
 const db = new sqlite3.Database(dbPath);
 
-// This script retrieves all TikTok records from the database
+// This script retrieves all media records from the database
 // and logs their details to the console.
-db.all("SELECT * FROM tiktoks", [], (err, rows) => {
+db.all("SELECT * FROM media_queue", [], (err, rows) => {
   if (err) {
     throw err;
   }
-  console.log("All TikTok records:", rows);
+  console.log("All media records:", rows);
   rows.forEach((row) => {
     console.log(`- ID: ${row.id}`);
+    console.log(`  Source: ${row.source}`);
     console.log(`  URL: ${row.url}`);
-    console.log(`  Caption: ${row.caption}`);
+    console.log(`  Caption Strategy: ${row.caption_strategy}`);
+    console.log(`  Custom Caption: ${row.caption_custom}`);
     console.log(`  Filename: ${row.filename}`);
     console.log(`  Created At: ${row.created_at}`);
     console.log(`  Downloaded: ${row.downloaded ? "Yes" : "No"}`);
     console.log(`  Posted: ${row.posted ? "Yes" : "No"}`);
     console.log(`  Logo: ${row.logo ? "Yes" : "No"}`);
+    console.log(`  Format Preset: ${row.format_preset}`);
+    console.log("-----");
   });
   db.close();
 });
