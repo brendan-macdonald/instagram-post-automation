@@ -12,11 +12,11 @@ const dbPath = path.resolve(__dirname, dbArg);
 
 const db = new sqlite3.Database(dbPath);
 
-db.run(`DELETE FROM tiktoks`, function (err) {
+db.run(`DELETE FROM media_queue`, function (err) {
   if (err) {
     console.error("Error clearing table:", err.message);
   } else {
-    console.log("All rows deleted from tiktoks table.");
+    console.log("All rows deleted from media_queue table.");
   }
   db.close();
 });

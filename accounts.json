@@ -5,7 +5,8 @@
     "ig_user_id": "17841473031907205",
     "logoPath": "./assets/zerotobuilt.jpg",
     "caption": "Follow @zerotobuilt for daily engineering / technology content ⚙️📲\n\n#manufacturing #engineer #invention #howitsmade #entrepreneur #engineeringlife #processengineering #mechanical_engineering #howitworks #engineering #construction #innovation #civilengineering #building #mechanicalengineering",
-    "dbPath": "./db/tiktoks_zerotobuilt.db"
+    "dbPath": "./db/zerotobuilt.db",
+    "default_caption": "Follow @ZeroToBuilt for engineering + design 🚀"
   },
   {
     "username": "cryptoguide.us",
@@ -13,7 +14,8 @@
     "ig_user_id": "17841475373174816",
     "logoPath": "./assets/cryptoguide.png",
     "caption": "Follow @cryptoguide.us for daily crypto / memecoin content 🚀📲\n\n#crypto #bitcoin #btc #cryptocurrency #cryptonews #bitcoinnews #cryptotips #memecoin #memecoins #dogecoin #cryptomemes",
-    "dbPath": "./db/tiktoks_cryptoguide.db"
+    "dbPath": "./db/cryptoguide.db",
+    "default_caption": "Follow @cryptoguide for daily content 🚀"
   },
   {
     "username": "dailyrapscene",
@@ -21,6 +23,6 @@
     "ig_user_id": "17841475585406680",
     "logoPath": "./assets/dailyrapscene.png",
     "caption": "Follow @dailyrapscene for daily iconic rap clips and freestyles 🔥📲\n\n#rap #rapper #hiphop #rapmusic #freestyle #trap #bars #drill #rapvideo #musicreels",
-    "dbPath": "./db/tiktoks_dailyrapscene.db"
+    "dbPath": "./db/dailyrapscene.db"
   }
 ]
