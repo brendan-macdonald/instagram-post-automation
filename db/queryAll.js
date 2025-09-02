@@ -1,3 +1,21 @@
+/**
+ * queryAll.js
+ * Command-line script to list all records from the `media_queue` table in a SQLite database.
+ *
+ * Behavior:
+ *   - Retrieves every row in `media_queue`.
+ *   - Logs details (id, source, url, caption fields, filename, timestamps, flags, logo, format preset).
+ *   - Useful for debugging, verifying imports, and monitoring pipeline state.
+ *
+ * Exports:
+ *   - (none) — this is a CLI script.
+ *
+ * Usage:
+ *   node db/queryAll.js <dbPath>
+ *   // Example:
+ *   // node db/queryAll.js ./db/cryptoguide.db
+ */
+
 const sqlite3 = require("sqlite3").verbose();
 const path = require("path");
 

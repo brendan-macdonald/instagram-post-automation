@@ -1,11 +1,31 @@
-// Downloads a Twitter/X video using yt-dlp and returns the saved path + tweet text.
-// utils/downloadTwitter.js
+/**
+ * downloadTwitterVideo.js
+ * Module for downloading videos from Twitter/X using yt-dlp and extracting tweet text.
+ *
+ * Exports:
+ *   - downloadTwitterVideo: Downloads a Twitter/X video from a given URL and returns the saved file path along with the tweet text.
+ *
+ * Usage:
+ *   const { downloadTwitterVideo } = require("./downloadTwitterVideo");
+ *   const { videoPath, caption } = await downloadTwitterVideo("<tweet_url>", "myvideo");
+ */
+
 const { spawn } = require("child_process");
 const fs = require("fs");
 const path = require("path");
 
 const BIN = process.platform === "win32" ? "yt-dlp.exe" : "yt-dlp";
 
+/**
+ * Runs a shell command asynchronously and captures output.
+ *
+ * @param {string} cmd - The command to run (e.g., "yt-dlp").
+ * @param {string[]} args - Arguments for the command.
+ * @param {Object} [options] - Optional settings.
+ * @param {boolean} [options.parseJson=false] - Whether to parse the stdout as JSON.
+ * @returns {Promise<string|Object>} Resolves with command output (string or parsed JSON).
+ * @throws {Error} If the process exits with a non-zero code.
+ */
 function run(cmd, args, { parseJson = false } = {}) {
   return new Promise((resolve, reject) => {
     const p = spawn(cmd, args);
@@ -28,6 +48,13 @@ function run(cmd, args, { parseJson = false } = {}) {
   });
 }
 
+/**
+ * Finds the output file in the given directory based on the base filename.
+ *
+ * @param {string} dir - Directory to search for output.
+ * @param {string} base - Base filename (without extension).
+ * @returns {string|null} Path to the found file, or null if not found.
+ */
 function findOutput(dir, base) {
   const mp4 = path.join(dir, `${base}.mp4`);
   if (fs.existsSync(mp4)) return mp4;
@@ -35,6 +62,12 @@ function findOutput(dir, base) {
   return f ? path.join(dir, f) : null;
 }
 
+/**
+ * Normalizes Twitter/X URLs so they always use "twitter.com".
+ *
+ * @param {string} u - The original URL (may be x.com or twitter.com).
+ * @returns {string} Normalized Twitter URL.
+ */
 function normalizeTwitterUrl(u) {
   try {
     const url = new URL(u);
@@ -45,7 +78,14 @@ function normalizeTwitterUrl(u) {
   }
 }
 
-/** Download a Twitter/X video and return path + tweet text */
+/**
+ * Downloads a Twitter/X video and returns the saved file path along with the tweet text.
+ *
+ * @param {string} url - The URL of the tweet containing the video.
+ * @param {string} base - Base filename (without extension) for the downloaded file.
+ * @returns {Promise<{videoPath: string, caption: string}>} Resolves with the video path and tweet caption.
+ * @throws {Error} If the video cannot be downloaded or output file is not found.
+ */
 async function downloadTwitterVideo(url, base) {
   url = normalizeTwitterUrl(url);
   const dlDir = path.resolve(__dirname, "../downloads");

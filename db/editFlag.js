@@ -1,11 +1,28 @@
+/**
+ * editFlag.js
+ * Command-line script to reset a boolean-like flag (default: `downloaded`) in a SQLite table row.
+ * Intended for correcting or re-queuing media entries in the database.
+ *
+ * Exports:
+ *   - (none) — this is a CLI script.
+ *
+ * Notes:
+ *   - By default, this script sets `downloaded = 0` for the given row ID.
+ *   - You can adapt the SQL statement to update other flags/columns relevant to your schema
+ *     (e.g., `posted`, `processed`, `archived`) by replacing the `downloaded` column name.
+ *
+ * Usage:
+ *   node db/editFlag.js <dbPath> <id> [table]
+ *
+ * Examples:
+ *   node db/editFlag.js ./db/zerotobuilt.db 1
+ *   node db/editFlag.js ./db/zerotobuilt.db 42 media_queue
+ */
+
+// db/editFlag.js
 const fs = require("fs");
 const path = require("path");
 const sqlite3 = require("sqlite3").verbose();
-
-// Usage: node scripts/reset_downloaded.js <dbPath> <id> [table]
-// Examples:
-//   node scripts/reset_downloaded.js ./db/zerotobuilt.db 1
-//   node scripts/reset_downloaded.js ./db/zerotobuilt.db 42 media_queue
 
 const dbArg = process.argv[2];
 const idArg = process.argv[3];
@@ -13,7 +30,7 @@ const tableArg = (process.argv[4] || "").trim();
 
 // Validate args
 if (!dbArg || !idArg) {
-  console.log("Usage: node scripts/reset_downloaded.js <dbPath> <id> [table]");
+  console.log("Usage: node db/editFlag.js <dbPath> <id> [table]");
   process.exit(1);
 }
 
@@ -50,7 +67,7 @@ db.serialize(() => {
   // Optional: give SQLite a little patience if the DB is busy
   db.run("PRAGMA busy_timeout = 5000");
 
-  // Reset the downloaded flag (and optionally clear filename if you want)
+  // Reset the downloaded flag (can be adapted to other columns if needed)
   const sql = `UPDATE ${table} SET downloaded = 0 WHERE id = ?`;
 
   db.run(sql, [rowId], function (err) {

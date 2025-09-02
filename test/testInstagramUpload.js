@@ -1,8 +1,33 @@
+/**
+ * testInstagramUpload.js
+ * Diagnostic script to verify Instagram Graph API integration by uploading and publishing a test photo.
+ *
+ * Behavior:
+ *   - Step 1: Tests connection to the Instagram Business account via Graph API.
+ *   - Step 2: Uploads an image to an Instagram media container (not published yet).
+ *   - Step 3: Publishes the uploaded media to the Instagram account.
+ *   - Logs responses or errors at each step for debugging.
+ *
+ * Exports:
+ *   - (none) — this is a standalone test script.
+ *
+ * Environment Variables (required):
+ *   - IG_ACCESS_TOKEN : Instagram Graph API access token.
+ *   - IG_USER_ID      : Instagram Business account ID.
+ *
+ * Usage:
+ *   node db/testInstagramUpload.js
+ *
+ * Notes:
+ *   - Intended only for testing connectivity and publishing flow with Instagram Graph API.
+ *   - Update the `imageUrl` and `caption` in the script to test with your own media.
+ */
+
 const axios = require("axios");
 const { response } = require("express");
-require("dotenv").config(); //use variables from .env
+require("dotenv").config(); // use variables from .env
 
-//load credentials from .env file
+// load credentials from .env file
 const IG_ACCESS_TOKEN = process.env.IG_ACCESS_TOKEN;
 const IG_USER_ID = process.env.IG_USER_ID;
 
@@ -11,7 +36,7 @@ if (!IG_ACCESS_TOKEN || !IG_USER_ID) {
   process.exit(1);
 }
 
-//(1) test connection to instagram Graph API
+// (1) test connection to instagram graph api
 async function testConnection() {
   try {
     console.log("testing instagram graph api connection...");
@@ -30,7 +55,7 @@ async function testConnection() {
   }
 }
 
-//(2) Upload photo to instagram container (without publishing yet)
+// (2) Upload photo to instagram container (without publishing yet)
 async function uploadPhoto(imageUrl, caption) {
   try {
     console.log("uploading image to instagram container...");
@@ -52,8 +77,7 @@ async function uploadPhoto(imageUrl, caption) {
   }
 }
 
-//Publish uploaded media
-
+// (3) Publish uploaded media
 async function publishMedia(containerId) {
   try {
     console.log("Publishing media...");
@@ -73,12 +97,12 @@ async function publishMedia(containerId) {
   }
 }
 
-//running the full test flow
+// running the full test flow
 (async () => {
   await testConnection();
 
   const imageUrl =
-    "https://media.istockphoto.com/id/527617369/photo/crowded-istiklal-street-in-istanbul.jpg?s=612x612&w=0&k=20&c=lhbrVOISZFf7oYJ0i2UUwStm1mgFCUoaX4BieeaIfno=";
+    "https://media.istockphoto.com/id/527617369/photo/crowded-istiklal-street-in-istanbul.jpg?s=612x612&w=0&k=20&c=lhbrVOISZFf7oYJ0i2UUwStm1mgFC9eaIfno=";
   const caption = "Test instagram graph api with node.js 2";
 
   const containerId = await uploadPhoto(imageUrl, caption);

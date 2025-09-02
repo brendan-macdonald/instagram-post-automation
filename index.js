@@ -1,4 +1,33 @@
-// index.js
+/**
+ * index.js
+ * Orchestrates the end-to-end pipeline for a single media item:
+ *   DB queue → download (TikTok/Twitter) → transcode (9:16 presets) → upload (Instagram Graph API) → bookkeeping.
+ *
+ * Exports:
+ *   - (none) — this is a CLI entrypoint.
+ *
+ * Environment Variables (required unless noted):
+ *   - ACCOUNT_NAME             : (optional) Friendly account label used in logs.
+ *   - DB_PATH                  : SQLite database path (contains `media_queue`).
+ *   - IG_ACCESS_TOKEN          : Instagram Graph API access token.
+ *   - IG_USER_ID               : Instagram Business user ID.
+ *   - CLOUDFLARE_PUBLIC_URL    : Public base URL that serves files from your local `/downloads` directory.
+ *   - CAPTION                  : (optional) Default/fallback caption.
+ *   - LOGO_PATH                : (optional) Relative/absolute path to logo image used when DB `logo` = 1 and preset supports it.
+ *
+ * Usage:
+ *   # Ensure `.env` contains the variables above, then run:
+ *   node index.js
+ *
+ * Notes:
+ *   - The next unprocessed row is selected via `getNextUnprocessedMedia` (WHERE posted = 0 ORDER BY downloaded DESC, created_at ASC).
+ *   - `downloadMedia` returns { videoPath, caption? } where caption is present for Twitter (tweet text) and may be absent for TikTok.
+ *   - Transcoding preset / caption resolution:
+ *       * preset comes from `format_preset` (e.g., "raw" | "caption_top" | "logo_only").
+ *       * caption_strategy: "custom" | "from_source" | "default" determines the final caption text.
+ *       * DB `logo` (1/0) enables/disables overlay when preset allows and LOGO_PATH is provided.
+ */
+
 "use strict";
 
 require("dotenv").config();
@@ -53,6 +82,10 @@ for (const [k, v] of Object.entries(REQUIRED_VARS)) {
 // ---------- DB ----------
 const db = new sqlite3.Database(dbPath);
 
+/**
+ * Close DB connection (best-effort) and exit with the given code.
+ * @param {number} code - Process exit code (0 = success).
+ */
 function closeAndExit(code) {
   try {
     db.close();

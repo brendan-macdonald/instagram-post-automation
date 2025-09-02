@@ -1,3 +1,43 @@
+/**
+ * start.js
+ * Orchestrator for running the local server, Cloudflare Tunnel, and scheduled multi-account posting jobs.
+ *
+ * Exports:
+ *   - (none) — this is a CLI entrypoint.
+ *
+ * What this script does:
+ *   1) Loads account configs from ./accounts.json (per-account DB & IG credentials).
+ *   2) Starts your local HTTP server (server/server.js).
+ *   3) Starts a named Cloudflare Tunnel using ~/.cloudflared/config.yml.
+ *   4) For each account, repeatedly runs `node index.js` on a schedule to post the next queued video.
+ *   5) Gracefully shuts down the server and tunnel when all accounts are finished or on SIGINT.
+ *
+ * Usage:
+ *   node start.js
+ *
+ * Required files & config:
+ *   - ./accounts.json            : Array of accounts with keys used below (username, ig_user_id, ig_access_token, dbPath, caption?, logoPath?)
+ *   - ~/.cloudflared/config.yml  : Must define `tunnel:` and `credentials-file:`; this script verifies both.
+ *   - server/server.js           : Your local server that serves /downloads/* to the tunnel hostname.
+ *
+ * Scheduling:
+ *   - Interval is POST_INTERVAL_MINUTES (default 7 minutes) between posts per account.
+ *   - If an account runs out of unprocessed media (exit code 99 from index.js), it stops for that account.
+ *   - When all accounts are finished, the script stops the server & tunnel and exits.
+ *
+ * Example accounts.json (minimal):
+ * [
+ *   {
+ *     "username": "zerotobuilt",
+ *     "ig_user_id": "1784xxxxxxxxxxxx",
+ *     "ig_access_token": "IGQVJ...",
+ *     "dbPath": "./db/zerotobuilt.db",
+ *     "caption": "Follow @ZeroToBuilt for more 🚀",
+ *     "logoPath": "./assets/ztb_logo.png"
+ *   }
+ * ]
+ */
+
 require("dotenv").config();
 
 const { spawn } = require("child_process");
@@ -24,7 +64,11 @@ const CF_CONFIG =
   process.env.CF_TUNNEL_CONFIG || path.join(CF_DIR, "config.yml");
 const TUNNEL_NAME = process.env.CF_TUNNEL_NAME || "my-tunnel";
 
-// Optional: verify creds JSON referenced by config.yml (best effort)
+/**
+ * Read a YAML file quickly (best effort).
+ * @param {string} p - Path to YAML file.
+ * @returns {string} Raw file contents or empty string on failure.
+ */
 function readYamlQuick(p) {
   try {
     return fs.readFileSync(p, "utf8");
@@ -32,12 +76,25 @@ function readYamlQuick(p) {
     return "";
   }
 }
+
+/**
+ * Extract `credentials-file:` absolute path from cloudflared config text.
+ * @param {string} yaml - Contents of config.yml.
+ * @returns {string|null} Path to credentials JSON, if found.
+ */
 function credsFileFromConfig(yaml) {
   const m = yaml.match(/credentials-file:\s*(.+)\s*$/m);
   return m ? m[1].trim() : null;
 }
 
 // ===== helpers =====
+/**
+ * Spawn a child process and log the command.
+ * @param {string} cmd - Executable name.
+ * @param {string[]} args - Arguments array.
+ * @param {import('child_process').SpawnOptions} [opts] - Spawn options.
+ * @returns {import('child_process').ChildProcess} The spawned process.
+ */
 function spawnLogged(cmd, args, opts = {}) {
   console.log(`[spawn] ${cmd} ${args.join(" ")}`);
   const child = spawn(cmd, args, { stdio: "inherit", ...opts });
@@ -49,6 +106,12 @@ function spawnLogged(cmd, args, opts = {}) {
   });
   return child;
 }
+
+/**
+ * Kill a child process if still alive (best effort).
+ * @param {import('child_process').ChildProcess|undefined} child - Child process.
+ * @param {string} name - Descriptive name for logs.
+ */
 function killIfAlive(child, name) {
   if (!child) return;
   try {

@@ -1,17 +1,47 @@
+/**
+ * transcodeVideo.js
+ * High-level transcoding pipeline for 1080x1920 vertical reels: builds a white canvas,
+ * scales/positions the source video, and supports presets for captions or logo overlay.
+ *
+ * Exports:
+ *   - transcodeVideo: Transcodes a source video into a 9:16 output with optional logo/caption styling.
+ *
+ * Usage:
+ *   const { transcodeVideo } = require("./transcodeVideo");
+ *   await transcodeVideo("input.mp4", "output.mp4", "./logo.png", true, {
+ *     preset: "caption_top",
+ *     source_caption: "Your caption here"
+ *   });
+ */
+
+// transcodeVideo.js
 const fs = require("fs");
 const os = require("os");
 const path = require("path");
 const ffmpeg = require("fluent-ffmpeg");
 
-const FFMPEG_PATH = process.env.FFMPEG_PATH || "/usr/bin/ffmpeg";
-const FFPROBE_PATH = process.env.FFPROBE_PATH || "/usr/bin/ffprobe";
+// Use node-bundled binaries (matches your old setup)
+const ffmpegPath = require("ffmpeg-static");
+const ffprobePath = require("@ffprobe-installer/ffprobe").path;
 
-ffmpeg.setFfmpegPath(FFMPEG_PATH);
-ffmpeg.setFfprobePath(FFPROBE_PATH);
+ffmpeg.setFfmpegPath(ffmpegPath);
+ffmpeg.setFfprobePath(ffprobePath);
 
 const CANVAS_W = 1080;
 const CANVAS_H = 1920;
 
+// -------- caption helpers --------
+
+/**
+ * Resolve the caption text based on strategy.
+ *
+ * @param {Object} params
+ * @param {"custom"|"from_source"|"default"} params.caption_strategy - How to determine caption.
+ * @param {string} params.caption_custom - Custom caption text when strategy is "custom".
+ * @param {string} params.source_caption - Caption derived from the source media.
+ * @param {string} params.default_caption - Fallback caption if others are empty.
+ * @returns {string} Final caption string (may be empty).
+ */
 function resolveCaption({
   caption_strategy,
   caption_custom,
@@ -19,16 +49,19 @@ function resolveCaption({
   default_caption,
 }) {
   const fallback = (default_caption || "").trim();
-
-  if (caption_strategy === "custom") {
+  if (caption_strategy === "custom")
     return (caption_custom || "").trim() || fallback;
-  }
-  if (caption_strategy === "from_source") {
+  if (caption_strategy === "from_source")
     return (source_caption || "").trim() || fallback;
-  }
   return fallback;
 }
 
+/**
+ * Probe video dimensions using ffprobe.
+ *
+ * @param {string} inputPath - Path to input media.
+ * @returns {Promise<{width:number,height:number}>} Width/height or zeros if unavailable.
+ */
 async function ffprobeVideoSize(inputPath) {
   return new Promise((resolve) => {
     ffmpeg.ffprobe(inputPath, (err, data) => {
@@ -43,6 +76,12 @@ async function ffprobeVideoSize(inputPath) {
   });
 }
 
+/**
+ * Detect whether source is approximately 9:16.
+ *
+ * @param {string} inputPath - Path to input media.
+ * @returns {Promise<{is916:boolean}>} True when aspect is ~0.5625 within tolerance.
+ */
 async function probeAspect(inputPath) {
   return new Promise((resolve) => {
     ffmpeg.ffprobe(inputPath, (err, data) => {
@@ -58,9 +97,15 @@ async function probeAspect(inputPath) {
 }
 
 /**
- * Compute scaled video placement.
+ * Compute scaled video placement within a 1080x1920 canvas.
  * - If ~9:16: pin under the top strip.
  * - Otherwise: place slightly higher than center (1/3 offset).
+ *
+ * @param {number} srcW - Source width.
+ * @param {number} srcH - Source height.
+ * @param {boolean} is916 - Whether source is ~9:16.
+ * @param {number} topStrip - Pixels reserved at top (e.g., for captions).
+ * @returns {{outVideoW:number,outVideoH:number,x:number,y:number}} Layout metrics.
  */
 function computeScaledLayout(srcW, srcH, is916, topStrip) {
   const availW = CANVAS_W;
@@ -71,15 +116,32 @@ function computeScaledLayout(srcW, srcH, is916, topStrip) {
   const outVideoH = Math.round(srcH * scale);
 
   const x = Math.round((CANVAS_W - outVideoW) / 2);
-  const y = is916 ? topStrip : topStrip + Math.round((availH - outVideoH) / 3); // 2/3 positioning
+  const y = is916 ? topStrip : topStrip + Math.round((availH - outVideoH) / 3);
 
   return { outVideoW, outVideoH, x, y };
 }
 
+/**
+ * Make a filter-safe file path for ffmpeg expressions.
+ *
+ * @param {string} p - Original path.
+ * @returns {string} Sanitized/escaped path.
+ */
 function safeFilterPath(p) {
   return p.replace(/\\/g, "/").replace(/'/g, "\\'");
 }
 
+/**
+ * Build a temporary .ass subtitle file for top captions.
+ *
+ * @param {Object} params
+ * @param {string} params.text - Caption text (supports newlines).
+ * @param {string} [params.fontFamily="DejaVu Sans"] - Font family.
+ * @param {number} [params.fontSize=48] - Font size.
+ * @param {number} params.bottomOfCaptionY - Y pixel where caption block should end.
+ * @param {number} params.videoLeftRightMargin - Horizontal margins to avoid overlapping video.
+ * @returns {string} Path to the generated .ass file.
+ */
 function buildAssCaptionFile({
   text,
   fontFamily = "DejaVu Sans",
@@ -122,6 +184,38 @@ function buildAssCaptionFile({
   return tmp;
 }
 
+// -------- main --------
+
+/**
+ * Transcode a source video into a 1080x1920 reel with optional logo or top caption preset.
+ *
+ * Presets:
+ *   - "raw":         Scales video onto a white canvas with slight 1.05x speed-up.
+ *   - "caption_top": Renders an ASS caption at the top, places video below it.
+ *   - "logo_only":   Overlays a centered logo near the top, positions video slightly lower.
+ *
+ * Common encoding:
+ *   - H.264 (libx264, high@4.0), yuv420p, AAC 128k, 44.1kHz stereo
+ *   - GOP 48, faststart, ~2 Mbps target
+ *   - Audio atempo 1.05, video setpts 1.05x (where applicable)
+ *
+ * @param {string} inputPath - Source video path.
+ * @param {string} outputPath - Destination path for the transcoded video.
+ * @param {string|null} [logoPath=null] - Path to logo image when using "logo_only".
+ * @param {boolean} [withLogo=true] - Whether to attempt logo overlay for logo-based presets.
+ * @param {Object} [options={}] - Additional options and preset parameters.
+ * @param {"raw"|"caption_top"|"logo_only"} [options.preset] - Preset selection; defaults based on logo presence.
+ * @param {"default"|"custom"|"from_source"} [options.caption_strategy="default"] - How to compute caption text.
+ * @param {string} [options.caption_custom=""] - Custom caption when strategy is "custom".
+ * @param {string} [options.source_caption=""] - Caption from the source when strategy is "from_source".
+ * @param {string} [options.default_caption] - Fallback caption.
+ * @param {string} [options.fontFamily="DejaVu Sans"] - Caption font family.
+ * @param {number} [options.fontSize=48] - Caption font size.
+ * @param {number} [options.topStrip=240] - Reserved pixels at the top for caption area.
+ * @param {number} [options.captionBottomMargin=12] - Space between caption block and video.
+ * @returns {Promise<string>} Resolves with the outputPath when transcoding completes.
+ * @throws {Error} On invalid preset or ffmpeg processing errors.
+ */
 function transcodeVideo(
   inputPath,
   outputPath,
@@ -130,7 +224,7 @@ function transcodeVideo(
   options = {}
 ) {
   const {
-    preset = withLogo && logoPath ? "logo_only" : "raw",
+    preset: presetIn = withLogo && logoPath ? "logo_only" : "raw",
     caption_strategy = "default",
     caption_custom = "",
     source_caption = "",
@@ -139,6 +233,8 @@ function transcodeVideo(
     topStrip = 240,
     captionBottomMargin = 12,
   } = options;
+
+  const preset = String(presetIn).trim().toLowerCase();
 
   return new Promise(async (resolve, reject) => {
     let assPath = null;
@@ -165,10 +261,12 @@ function transcodeVideo(
         default_caption: options.default_caption,
       });
 
-      if (preset !== "raw") {
+      const videoScale = `scale=${outVideoW}:${outVideoH}:force_original_aspect_ratio=decrease`;
+
+      const ensureAss = () => {
+        if (assPath) return assPath;
         const videoLRMargin = (CANVAS_W - outVideoW) / 2;
         const bottomOfCaptionY = vidY - captionBottomMargin;
-
         assPath = buildAssCaptionFile({
           text: chosenCaption,
           fontFamily,
@@ -176,50 +274,67 @@ function transcodeVideo(
           bottomOfCaptionY,
           videoLeftRightMargin: videoLRMargin,
         });
-      }
+        return assPath;
+      };
 
-      const videoScale = `scale=${outVideoW}:${outVideoH}:force_original_aspect_ratio=decrease`;
-
-      if (
-        preset === "logo_only" &&
-        withLogo &&
-        logoPath &&
-        fs.existsSync(logoPath)
-      ) {
-        command = command
-          .input(logoPath)
-          .complexFilter([
-            `color=white:s=${CANVAS_W}x${CANVAS_H}:d=1[bg]`,
-            // safer: use 'subtitles' alias, no quotes around path
-            `[bg]subtitles=${safeFilterPath(assPath)}[bgcap]`,
-            `[1:v]scale=700:-1[logo]`,
-            // corrected overlay vars (no W/H)
-            `[bgcap][logo]overlay=x=(main_w-overlay_w)/2:y=120[bgWithLogo]`,
-            `[0:v]${videoScale},setpts=PTS/1.05[spedupv]`,
-            `[bgWithLogo][spedupv]overlay=${vidX}:${vidY}[final]`,
-          ])
-          .outputOptions(["-map", "[final]", "-map", "0:a?"]);
-      } else if (preset === "raw") {
+      if (preset === "raw") {
         command = command
           .videoFilters([
             `${videoScale},pad=${CANVAS_W}:${CANVAS_H}:(ow-iw)/2:(oh-ih)/2:color=white,setpts=PTS/1.05`,
           ])
           .outputOptions(["-map", "0:v", "-map", "0:a?"]);
       } else if (preset === "caption_top") {
+        const cap = ensureAss();
         command = command
           .complexFilter([
             `color=white:s=${CANVAS_W}x${CANVAS_H}:d=1[bg]`,
-            `[bg]subtitles=${safeFilterPath(assPath)}[bgcap]`,
+            `[bg]subtitles=${safeFilterPath(cap)}[bgcap]`,
             `[0:v]${videoScale},setpts=PTS/1.05[vid]`,
             `[bgcap][vid]overlay=${vidX}:${vidY}[final]`,
           ])
           .outputOptions(["-map", "[final]", "-map", "0:a?"]);
+      } else if (preset === "logo_only") {
+        // === Legacy pipeline restored ===
+        const hasLogo = withLogo && logoPath && fs.existsSync(logoPath);
+        if (!hasLogo) {
+          return reject(
+            new Error("Preset 'logo_only' requires a valid logoPath.")
+          );
+        }
+
+        command = command
+          .input(logoPath)
+          .complexFilter([
+            // 1) White background 1080x1920
+            `color=white:s=${CANVAS_W}x${CANVAS_H}:d=1[bg]`,
+
+            // 2) Scale logo to width 700
+            `[1:v]scale=700:-1[logo]`,
+
+            // 3) Overlay logo centered at y=120
+            `[bg][logo]overlay=x=(main_w-overlay_w)/2:y=120[bgWithLogo]`,
+
+            // 4) Scale video to width 820 (height auto)
+            `[0:v]scale=820:-2[resized]`,
+
+            // 5) Speed up video (choose one; legacy ended up 1.05x)
+            `[resized]setpts=PTS/1.05[spedupv]`,
+
+            // 6) Overlay video centered with +80px vertical shift
+            `[bgWithLogo][spedupv]overlay=(main_w-overlay_w)/2:(main_h-overlay_h)/2+80[final]`,
+          ])
+          .outputOptions(["-map", "[final]", "-map", "0:a?"]);
       } else {
-        return reject(new Error(`Unknown preset: ${preset}`));
+        return reject(
+          new Error(
+            `Unknown preset: ${preset}. Allowed: raw, caption_top, logo_only`
+          )
+        );
       }
 
+      // Shared encoding settings
       command
-        .audioFilters("atempo=1.05")
+        .audioFilters("atempo=1.05") // set to 1.1 if you switch setpts to 1.1
         .outputOptions([
           "-c:v",
           "libx264",
