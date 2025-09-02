@@ -256,6 +256,6 @@ This project uses the **Instagram Graph API** to publish Reels. To set it up:
 
 👤 **Brendan MacDonald**
 
-- GitHub: https://github.com/yourusername
-- LinkedIn: https://linkedin.com/in/yourprofile
+- GitHub: https://github.com/brendan-macdonald
+- LinkedIn: https://www.linkedin.com/in/brendan-macdonald-26602a171/
 - Email: macdonald.brendan@outlook.com
