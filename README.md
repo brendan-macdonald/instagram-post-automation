@@ -78,7 +78,7 @@ Built for **content creators, agencies, and social media managers**, it eliminat
 
 1. **Clone the repository**
 
-   git clone https://github.com/yourusername/instagram-post-automation.git
+   git clone https://github.com/brendan-macdonald/instagram-post-automation.git
    cd instagram-post-automation
 
 2. **Install dependencies**
