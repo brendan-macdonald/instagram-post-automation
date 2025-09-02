@@ -1,16 +1,34 @@
-//Uses CLOUDFLARE_PUBLIC_URL and video filename to construct a public video URL.
-//Creates a video container using the Instagram Graph API.
-//Waits 10 seconds to allow Instagram to process the video.
-//Publishes the video to Instagram Business account
+/**
+ * uploadToInstagram.js
+ * Handles uploading and publishing videos to an Instagram Business account using the Graph API.
+ *
+ * Exports:
+ *   - uploadToInstagram: Uploads a video (served via Cloudflare) to Instagram Reels and publishes it.
+ *
+ * Usage:
+ *   const { uploadToInstagram } = require("./uploadToInstagram");
+ *   await uploadToInstagram("<cloudflare_url>", "video.mp4", "My caption", "<IG_ACCESS_TOKEN>", "<IG_USER_ID>");
+ */
+
 const axios = require("axios");
 
-//function uploads and publishes a video to reels using the graph api
-// @param {string} cloudflareUrl - The public cloudflareUrl serving the local video files
-// @param {string} filename - The name of the video file (e.g., tiktok_20.mp4)
-// @param {string} caption - The caption text to include in the Instagram post
-// @param {string} IG_ACCESS_TOKEN - Instagram access token for this account
-// @param {string} IG_USER_ID - Instagram user ID for this account
-
+/**
+ * Uploads and publishes a video to Instagram Reels using the Graph API.
+ *
+ * Workflow:
+ *   1. Creates a media container with the video URL and caption.
+ *   2. Waits briefly to allow Instagram to process the video.
+ *   3. Polls Graph API until the video status is FINISHED.
+ *   4. Publishes the video to the account.
+ *
+ * @param {string} cloudflareUrl - Public Cloudflare URL serving the local video files.
+ * @param {string} filename - The name of the video file (e.g., "tiktok_20.mp4").
+ * @param {string} caption - The caption text to include in the Instagram post.
+ * @param {string} IG_ACCESS_TOKEN - Instagram access token for the account.
+ * @param {string} IG_USER_ID - Instagram user ID for the account.
+ * @returns {Promise<{success: boolean, id?: string, error?: string}>} Upload result.
+ * @throws {Error} If creating the media container or publishing fails.
+ */
 async function uploadToInstagram(
   cloudflareUrl,
   filename,
@@ -24,7 +42,7 @@ async function uploadToInstagram(
   const videoUrl = `${cloudflareUrl}/downloads/${filename}`;
   console.log("Video url:", videoUrl);
 
-  //1) create video container
+  // 1) create video container
   let containerId;
   try {
     console.log("Creating video contianer...");
@@ -58,16 +76,15 @@ async function uploadToInstagram(
     throw err;
   }
 
-  //ensure video is processed
+  // ensure video is processed
   console.log("Waiting 10 seconds to ensure video is processing...");
   await new Promise((res) => setTimeout(res, 10000));
 
-  // After containerId = containerResponse.data.id;
   console.log("Polling for Instagram to finish processing the video...");
   await waitForMediaReady(containerId, IG_ACCESS_TOKEN);
   console.log("Media is ready, publishing...");
 
-  //2) publish the video
+  // 2) publish the video
   try {
     console.log("Publishing media to instagram...");
     const publishResponse = await axios.post(
@@ -88,18 +105,21 @@ async function uploadToInstagram(
       "Error publishing media:",
       error.response?.data || error.message
     );
-    // Log the full error object for debugging
     console.dir(error, { depth: null });
     return { success: false, error: error.message };
   }
 }
 
-// Polls the media container status until it's ready or the max attempts are reached
-// @param {string} containerId - The ID of the media container
-// @param {string} accessToken - The access token for Instagram Graph API
-// @param {number} maxAttempts - The maximum number of polling attempts (default: 10)
-// @param {number} intervalMs - The interval between polling attempts in milliseconds (default: 5000)
-
+/**
+ * Polls the media container status until it's ready or max attempts are reached.
+ *
+ * @param {string} containerId - The ID of the media container.
+ * @param {string} accessToken - Instagram Graph API access token.
+ * @param {number} [maxAttempts=10] - Maximum number of polling attempts.
+ * @param {number} [intervalMs=5000] - Delay between polling attempts in ms.
+ * @returns {Promise<boolean>} Resolves true if media is ready; rejects if error or timeout.
+ * @throws {Error} If processing fails or never finishes within max attempts.
+ */
 async function waitForMediaReady(
   containerId,
   accessToken,

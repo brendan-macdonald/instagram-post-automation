@@ -1,3 +1,20 @@
+/**
+ * insertSample.js
+ * Command-line script to seed the database with sample TikTok entries for testing.
+ *
+ * Behavior:
+ *   - Inserts a predefined set of TikTok video rows (URL, caption, filename) into the `tiktoks` table.
+ *   - Useful for validating that the pipeline (download, transcode, upload) works end-to-end.
+ *
+ * Exports:
+ *   - (none) — this is a CLI script.
+ *
+ * Usage:
+ *   node db/insertSample.js <dbPath>
+ *   // Example:
+ *   // node db/insertSample.js ./db/zerotobuilt.db
+ */
+
 const sqlite3 = require("sqlite3").verbose();
 const path = require("path");
 
@@ -14,15 +31,16 @@ const db = new sqlite3.Database(dbPath);
 const sampleData = [
   {
     url: "https://www.tiktok.com/@mrbeast/video/7505849400019717406",
-    caption: "Andy Filips",
-    filename: "Andy.mp4",
+    caption: "Mr Beast Video Test",
+    filename: "mrbeast_1.mp4",
   },
   {
     url: "https://www.tiktok.com/@mrbeast/video/7508056331211787551",
-    caption: "Dalton Riggs",
-    filename: "Dalton.mp4",
+    caption: "Mr Beast Video Test 2",
+    filename: "mrbeast_2.mp4",
   },
 ];
+
 // This script inserts sample TikTok data into the database
 // to test the application functionality.
 db.serialize(() => {

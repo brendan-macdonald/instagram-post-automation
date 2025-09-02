@@ -1,3 +1,26 @@
+/**
+ * testGraphAPI.js
+ * Diagnostic script to verify Facebook Graph API and Instagram Business account integration.
+ *
+ * Behavior:
+ *   - Step 1: Fetches available Facebook Pages linked to the access token.
+ *   - Step 2: Retrieves the Instagram Business account ID associated with a chosen Page.
+ *   - Step 3: Fetches account information (username, profile picture, followers, media count).
+ *   - Logs results or errors at each step for troubleshooting.
+ *
+ * Exports:
+ *   - (none) — this is a standalone test script.
+ *
+ * Usage:
+ *   node db/testGraphAPI.js
+ *   // Requires environment variable: IG_ACCESS_TOKEN
+ *
+ * Notes:
+ *   - Assumes you have a valid Facebook Graph API token in `.env` as `IG_ACCESS_TOKEN`.
+ *   - The script currently picks `response.data.data[1]` in Step 1. Adjust the index if your target Page
+ *     is at a different position in the returned list.
+ */
+
 const axios = require("axios");
 require("dotenv").config();
 

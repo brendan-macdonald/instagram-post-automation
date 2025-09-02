@@ -1,3 +1,16 @@
+/**
+ * clearTable.js
+ * Command-line script to clear all rows from the `media_queue` table in a SQLite database.
+ *
+ * Exports:
+ *   - (none) — this is a CLI script.
+ *
+ * Usage:
+ *   node db/clearTable.js <dbPath>
+ *   // Example:
+ *   // node db/clearTable.js ./media.db
+ */
+
 // db/clearTable.js
 const sqlite3 = require("sqlite3").verbose();
 const path = require("path");

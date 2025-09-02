@@ -1,12 +1,28 @@
+/**
+ * downloadTikTok.js
+ * Module for downloading TikTok videos without watermark using the TikWM API.
+ *
+ * Exports:
+ *   - downloadTikTokVideo: Downloads a TikTok video from a given URL and saves it locally.
+ *
+ * Usage:
+ *   const { downloadTikTokVideo } = require("./downloadTikTok");
+ *   await downloadTikTokVideo("<video_url>", "myvideo.mp4", "accountName");
+ */
+
 const axios = require("axios");
 const fs = require("fs");
 const path = require("path");
+
 /**
  * Downloads a TikTok video without watermark using the TikWM API.
+ *
  * @param {string} videoUrl - The URL of the TikTok video to download.
- * @returns {Promise<void>}
+ * @param {string} filename - The desired filename for the downloaded video.
+ * @param {string} [accountName="unknown"] - Optional account name for logging purposes.
+ * @returns {Promise<string>} Resolves with the full path to the downloaded video.
+ * @throws {Error} If the video URL is not found or download fails.
  */
-
 async function downloadTikTokVideo(
   videoUrl,
   filename,
@@ -39,10 +55,10 @@ async function downloadTikTokVideo(
     }
 
     console.log(`[${accountName}] Video URL: ${tiktokUrl}`);
-    //Step 2: prepare local file stream
+    // Step 2: prepare local file stream
     const writer = fs.createWriteStream(outputPath);
 
-    //Step 3: stream the video from url and save it to the local file
+    // Step 3: stream the video from url and save it to the local file
     const videoStream = await axios.get(tiktokUrl, {
       responseType: "stream", // Set response type to stream for downloading
     });

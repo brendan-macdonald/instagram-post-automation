@@ -1,4 +1,15 @@
-// db/clearTable.js
+/**
+ * deleteEntry.js
+ * Command-line script to delete a specific row from the `media_queue` table in a SQLite database.
+ *
+ * Exports:
+ *   - (none) — this is a CLI script.
+ *
+ * Usage:
+ *   node db/deleteEntry.js <dbPath> <mediaId>
+ *   // Example:
+ *   // node db/deleteEntry.js ./media.db 5
+ */
 const sqlite3 = require("sqlite3").verbose();
 const path = require("path");
 
