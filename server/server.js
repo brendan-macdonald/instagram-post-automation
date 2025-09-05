@@ -5,6 +5,7 @@
  * Behavior:
  *   - Hosts a local HTTP server on port 3000 (configurable if modified).
  *   - Serves static files from the `../downloads` directory under the `/downloads` route.
+ *   - Mounts the API router at /api for account/status/queue endpoints.
  *   - Intended to work with Cloudflare Tunnel to expose media files publicly.
  *
  * Exports:
@@ -22,13 +23,20 @@ const express = require("express");
 const path = require("path");
 require("dotenv").config();
 
+const apiRouter = require("./api");
+
 // define port for local development
 const PORT = 3000;
 // create express app
 const app = express();
 
+app.use(express.json());
+
 // serve static video files from 'downloads' directory to make any file in the directory publicly accessible
 app.use("/downloads", express.static(path.join(__dirname, "../downloads")));
+
+// mount the API router for account/status/queue endpoints
+app.use("/api", apiRouter);
 
 // Start local express server
 app.listen(PORT, () => {
