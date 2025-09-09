@@ -26,3 +26,18 @@ export async function createQueueItems(account, items) {
   const res = await api.post(`/${account}/queue`, items);
   return res.data; // { inserted, ids }
 }
+
+// Run index.js once for the account
+export function runOnce(account) {
+  return api.post(`/${account}/jobs/run-once`).then((res) => res.data);
+}
+
+// Start scheduled posting for the account
+export function startScheduler(account) {
+  return api.post(`/${account}/jobs/start`).then((res) => res.data);
+}
+
+// Stop scheduled posting for the account
+export function stopScheduler(account) {
+  return api.post(`/${account}/jobs/stop`).then((res) => res.data);
+}

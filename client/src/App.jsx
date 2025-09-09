@@ -1,13 +1,16 @@
 import React, { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { getAccounts, getStatus, getQueue } from "./lib/api";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { getAccounts, getStatus, getQueue, runOnce, startScheduler, stopScheduler } from "./lib/api";
 import AccountSelector from "./lib/components/AccountSelector";
 import StatCard from "./lib/components/StatCard";
 import QueuePreview from "./lib/components/QueuePreview";
-import { Users, Download, CheckCircle, AlertTriangle } from "lucide-react";
+import NewItemForm from "./components/NewItemForm";
+import { Users, Download, CheckCircle, AlertTriangle, Play, Pause, RefreshCw } from "lucide-react";
 
 export default function App() {
   const [activeAccount, setActiveAccount] = useState("");
+  const queryClient = useQueryClient();
+  const [loading, setLoading] = useState({ run: false, start: false, stop: false });
 
   // Fetch accounts list
   const { data: accounts = [], isLoading: accountsLoading } = useQuery({
@@ -35,20 +38,79 @@ export default function App() {
     enabled: !!activeAccount,
   });
 
-  // Ensure AccountSelector and all API calls use the exact username string from accounts
   const handleAccountChange = (username) => {
     setActiveAccount(username);
+  };
+
+  // Button handlers
+  const handleRunOnce = async () => {
+    if (!activeAccount) return;
+    setLoading(l => ({ ...l, run: true }));
+    try {
+      await runOnce(activeAccount);
+      await queryClient.invalidateQueries({ queryKey: ["status", activeAccount] });
+      await queryClient.invalidateQueries({ queryKey: ["queue", activeAccount] });
+    } finally {
+      setLoading(l => ({ ...l, run: false }));
+    }
+  };
+
+  const handleStart = async () => {
+    if (!activeAccount) return;
+    setLoading(l => ({ ...l, start: true }));
+    try {
+      await startScheduler(activeAccount);
+      // Optionally show a toast here
+    } finally {
+      setLoading(l => ({ ...l, start: false }));
+    }
+  };
+
+  const handleStop = async () => {
+    if (!activeAccount) return;
+    setLoading(l => ({ ...l, stop: true }));
+    try {
+      await stopScheduler(activeAccount);
+    } finally {
+      setLoading(l => ({ ...l, stop: false }));
+    }
   };
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <header className="flex flex-col md:flex-row items-center justify-between mb-6 gap-4">
         <h1 className="text-2xl font-bold tracking-tight">Instagram Automation Dashboard</h1>
-        <AccountSelector
-          accounts={accounts}
-          value={activeAccount}
-          onChange={handleAccountChange}
-        />
+        <div className="flex items-center gap-3">
+          <AccountSelector
+            accounts={accounts}
+            value={activeAccount}
+            onChange={handleAccountChange}
+          />
+          <button
+            className="flex items-center gap-1 px-3 py-1 rounded bg-gray-200 hover:bg-gray-300 disabled:opacity-50"
+            onClick={handleRunOnce}
+            disabled={!activeAccount || loading.run}
+            title="Run Once"
+          >
+            <RefreshCw className="w-4 h-4" /> Run Once
+          </button>
+          <button
+            className="flex items-center gap-1 px-3 py-1 rounded bg-green-600 text-white hover:bg-green-700 disabled:opacity-50"
+            onClick={handleStart}
+            disabled={!activeAccount || loading.start}
+            title="Start Scheduler"
+          >
+            <Play className="w-4 h-4" /> Start
+          </button>
+          <button
+            className="flex items-center gap-1 px-3 py-1 rounded bg-red-600 text-white hover:bg-red-700 disabled:opacity-50"
+            onClick={handleStop}
+            disabled={!activeAccount || loading.stop}
+            title="Stop Scheduler"
+          >
+            <Pause className="w-4 h-4" /> Stop
+          </button>
+        </div>
       </header>
 
       {!activeAccount ? (
@@ -80,6 +142,13 @@ export default function App() {
               icon={<AlertTriangle />}
             />
           </div>
+          <NewItemForm
+            account={activeAccount}
+            onCreated={() => {
+              queryClient.invalidateQueries({ queryKey: ["queue", activeAccount] });
+              queryClient.invalidateQueries({ queryKey: ["status", activeAccount] });
+            }}
+          />
           <div className="bg-white rounded shadow p-4">
             <h2 className="text-lg font-semibold mb-3">Latest Queue</h2>
             {queueLoading ? (
