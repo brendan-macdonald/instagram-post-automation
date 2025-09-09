@@ -35,6 +35,11 @@ export default function App() {
     enabled: !!activeAccount,
   });
 
+  // Ensure AccountSelector and all API calls use the exact username string from accounts
+  const handleAccountChange = (username) => {
+    setActiveAccount(username);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <header className="flex flex-col md:flex-row items-center justify-between mb-6 gap-4">
@@ -42,7 +47,7 @@ export default function App() {
         <AccountSelector
           accounts={accounts}
           value={activeAccount}
-          onChange={setActiveAccount}
+          onChange={handleAccountChange}
         />
       </header>
 
