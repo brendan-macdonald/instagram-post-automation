@@ -19,3 +19,10 @@ export function getStatus(account) {
 export function getQueue(account) {
   return api.get(`/${account}/queue`).then((res) => res.data);
 }
+
+// Create queue items (single or bulk)
+export async function createQueueItems(account, items) {
+  // items: array or single object (server will wrap if not array)
+  const res = await api.post(`/${account}/queue`, items);
+  return res.data; // { inserted, ids }
+}
