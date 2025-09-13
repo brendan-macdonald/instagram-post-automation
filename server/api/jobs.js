@@ -13,7 +13,7 @@ const fs = require("fs");
 const path = require("path");
 const { spawn } = require("child_process");
 
-const router = express.Router();
+const router = express.Router({ mergeParams: true }); // <-- mergeParams is important!
 const intervals = new Map(); // Map<username, NodeJS.Timeout>
 
 function makeEnvForAccount(acc) {
@@ -35,30 +35,23 @@ function getAccounts() {
   return JSON.parse(data);
 }
 
-router.post("/:account/jobs/run-once", (req, res) => {
+router.post("/run-once", (req, res) => {
   const accountName = req.params.account;
   const acc = getAccounts().find((a) => a.username === accountName);
-  if (!acc) {
-    return res.status(404).json({ error: "Account not found" });
-  }
+  if (!acc) return res.status(404).json({ error: "Account not found" });
   const child = spawn("node", ["index.js"], {
     env: makeEnvForAccount(acc),
     stdio: "inherit",
     cwd: path.resolve(__dirname, "../.."),
   });
-  child.on("exit", (code) => {
-    // Optionally log or handle exit
-  });
+  child.on("exit", () => {});
   res.json({ ok: true });
 });
 
-router.post("/:account/jobs/start", (req, res) => {
+router.post("/start", (req, res) => {
   const accountName = req.params.account;
   const acc = getAccounts().find((a) => a.username === accountName);
-  if (!acc) {
-    return res.status(404).json({ error: "Account not found" });
-  }
-  // Clear existing interval if present
+  if (!acc) return res.status(404).json({ error: "Account not found" });
   if (intervals.has(accountName)) {
     clearInterval(intervals.get(accountName));
     intervals.delete(accountName);
@@ -72,7 +65,6 @@ router.post("/:account/jobs/start", (req, res) => {
     });
   }, minutes * 60 * 1000);
   intervals.set(accountName, interval);
-  // Also run once immediately
   spawn("node", ["index.js"], {
     env: makeEnvForAccount(acc),
     stdio: "inherit",
@@ -81,7 +73,7 @@ router.post("/:account/jobs/start", (req, res) => {
   res.json({ ok: true, minutes });
 });
 
-router.post("/:account/jobs/stop", (req, res) => {
+router.post("/stop", (req, res) => {
   const accountName = req.params.account;
   if (intervals.has(accountName)) {
     clearInterval(intervals.get(accountName));

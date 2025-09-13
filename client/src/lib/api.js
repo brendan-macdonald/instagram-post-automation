@@ -41,3 +41,8 @@ export function startScheduler(account) {
 export function stopScheduler(account) {
   return api.post(`/${account}/jobs/stop`).then((res) => res.data);
 }
+
+// Delete a specific item from the queue
+export function deleteQueueItem(account, id) {
+  return api.delete(`/${account}/queue/${id}`).then((res) => res.data);
+}
