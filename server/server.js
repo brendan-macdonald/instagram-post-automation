@@ -30,7 +30,8 @@ const PORT = 3000;
 // create express app
 const app = express();
 
-app.use(express.json());
+// Bump JSON body limit for bulk inserts
+app.use(express.json({ limit: "2mb" }));
 
 // serve static video files from 'downloads' directory to make any file in the directory publicly accessible
 app.use("/downloads", express.static(path.join(__dirname, "../downloads")));

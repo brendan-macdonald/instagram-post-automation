@@ -4,7 +4,7 @@ import { getAccounts, getStatus, getQueue, runOnce, startScheduler, stopSchedule
 import AccountSelector from "./lib/components/AccountSelector";
 import StatCard from "./lib/components/StatCard";
 import QueuePreview from "./lib/components/QueuePreview";
-import NewItemForm from "./components/NewItemForm";
+import NewItemForm from "./lib/components/NewItemForm";
 import { Users, Download, CheckCircle, AlertTriangle, Play, Pause, RefreshCw } from "lucide-react";
 
 export default function App() {

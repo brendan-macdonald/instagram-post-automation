@@ -32,16 +32,17 @@ router.get("/:account/status", (req, res) => {
     }
 
     const dbPath = path.resolve(__dirname, "../../", account.dbPath);
+    console.log(`[status.js] Account: ${accountName}, DB Path: ${dbPath}`);
+
     const db = new sqlite3.Database(dbPath, sqlite3.OPEN_READONLY, (dbErr) => {
       if (dbErr) {
         return res.status(500).json({ error: "Could not open database" });
       }
       db.get(
         `SELECT
-            COUNT(*) AS total,
-            SUM(CASE WHEN posted = 1 THEN 1 ELSE 0 END) AS posted,
-            SUM(CASE WHEN downloaded = 1 AND posted = 0 THEN 1 ELSE 0 END) AS downloaded,
-            SUM(CASE WHEN downloaded = 0 THEN 1 ELSE 0 END) AS pending
+            COALESCE(SUM(CASE WHEN downloaded = 0 THEN 1 ELSE 0 END), 0) AS pending,
+            COALESCE(SUM(CASE WHEN downloaded = 1 AND posted = 0 THEN 1 ELSE 0 END), 0) AS downloaded,
+            COALESCE(SUM(CASE WHEN posted = 1 THEN 1 ELSE 0 END), 0) AS posted
          FROM media_queue`,
         [],
         (sqlErr, row) => {
@@ -50,10 +51,9 @@ router.get("/:account/status", (req, res) => {
             return res.status(500).json({ error: "Database query failed" });
           }
           res.json({
-            total: row.total,
-            posted: row.posted,
-            downloaded: row.downloaded,
             pending: row.pending,
+            downloaded: row.downloaded,
+            posted: row.posted,
           });
         }
       );
