@@ -13,9 +13,9 @@ const fs = require("fs");
 const path = require("path");
 const sqlite3 = require("sqlite3").verbose();
 
-const router = express.Router();
+const router = express.Router({ mergeParams: true }); // <-- mergeParams is important!
 
-router.get("/:account/queue", (req, res) => {
+router.get("/", (req, res) => {
   const accountName = req.params.account;
   const accountsPath = path.resolve(__dirname, "../../accounts.json");
 
@@ -58,7 +58,7 @@ router.get("/:account/queue", (req, res) => {
   });
 });
 
-router.post("/:account/queue", (req, res) => {
+router.post("/", (req, res) => {
   const accountName = req.params.account;
   const accountsPath = path.resolve(__dirname, "../../accounts.json");
 
@@ -185,6 +185,33 @@ router.post("/:account/queue", (req, res) => {
           res.json({ inserted: preparedItems.length, ids });
         });
       });
+    });
+  });
+});
+
+router.delete("/:id", (req, res) => {
+  const accountName = req.params.account;
+  const id = req.params.id;
+  const accountsPath = path.resolve(__dirname, "../../accounts.json");
+
+  fs.readFile(accountsPath, "utf8", (err, data) => {
+    if (err)
+      return res.status(500).json({ error: "Could not read accounts.json" });
+    let accounts;
+    try {
+      accounts = JSON.parse(data);
+    } catch {
+      return res.status(500).json({ error: "Invalid accounts.json format" });
+    }
+    const account = accounts.find((a) => a.username === accountName);
+    if (!account || !account.dbPath)
+      return res.status(404).json({ error: "Account not found" });
+    const dbPath = path.resolve(__dirname, "../../", account.dbPath);
+    const db = new sqlite3.Database(dbPath);
+    db.run("DELETE FROM media_queue WHERE id = ?", [id], function (err) {
+      db.close();
+      if (err) return res.status(500).json({ error: "Delete failed" });
+      res.json({ ok: true, deleted: this.changes });
     });
   });
 });

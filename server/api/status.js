@@ -9,9 +9,10 @@ const fs = require("fs");
 const path = require("path");
 const sqlite3 = require("sqlite3").verbose();
 
-const router = express.Router();
+const router = express.Router({ mergeParams: true });
 
-router.get("/:account/status", (req, res) => {
+router.get("/", (req, res) => {
+  // req.params.account is available here!
   const accountName = req.params.account;
   const accountsPath = path.resolve(__dirname, "../../accounts.json");
 

@@ -6,8 +6,9 @@
  *   - rows: Array of {id, source, url, format_preset, caption_strategy, created_at}
  */
 import React from "react";
+import { Trash2 } from "lucide-react";
 
-export default function QueuePreview({ rows }) {
+export default function QueuePreview({ rows, onDelete }) {
   return (
     <div className="overflow-x-auto">
       <table className="min-w-full bg-white rounded shadow-sm">
@@ -19,6 +20,7 @@ export default function QueuePreview({ rows }) {
             <th className="px-3 py-2 text-left">Preset</th>
             <th className="px-3 py-2 text-left">Caption</th>
             <th className="px-3 py-2 text-left">Created</th>
+            <th className="px-3 py-2"></th>
           </tr>
         </thead>
         <tbody>
@@ -30,6 +32,17 @@ export default function QueuePreview({ rows }) {
               <td className="px-3 py-2">{row.format_preset}</td>
               <td className="px-3 py-2">{row.caption_strategy}</td>
               <td className="px-3 py-2">{row.created_at}</td>
+              <td className="px-3 py-2">
+                {onDelete && (
+                  <button
+                    className="text-red-600 hover:text-red-800"
+                    title="Delete"
+                    onClick={() => onDelete(row.id)}
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                )}
+              </td>
             </tr>
           ))}
         </tbody>

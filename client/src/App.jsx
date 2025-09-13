@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { getAccounts, getStatus, getQueue, runOnce, startScheduler, stopScheduler } from "./lib/api";
+import { getAccounts, getStatus, getQueue, runOnce, startScheduler, stopScheduler, deleteQueueItem } from "./lib/api";
 import AccountSelector from "./lib/components/AccountSelector";
 import StatCard from "./lib/components/StatCard";
 import QueuePreview from "./lib/components/QueuePreview";
@@ -74,6 +74,12 @@ export default function App() {
     } finally {
       setLoading(l => ({ ...l, stop: false }));
     }
+  };
+
+  const handleDelete = async (id) => {
+    if (!activeAccount) return;
+    await deleteQueueItem(activeAccount, id);
+    queryClient.invalidateQueries({ queryKey: ["queue", activeAccount] });
   };
 
   return (
@@ -154,7 +160,7 @@ export default function App() {
             {queueLoading ? (
               <div className="text-gray-400">Loading queue…</div>
             ) : (
-              <QueuePreview rows={queue} />
+              <QueuePreview rows={queue} onDelete={handleDelete} />
             )}
           </div>
         </>
