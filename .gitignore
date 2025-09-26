@@ -3,3 +3,8 @@ node_modules/
 
 # environment variables
 .env
+# sensitive data
+accounts.json
+db/*.db
+# media downloads
+downloads/
