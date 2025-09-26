@@ -7,3 +7,7 @@ node_modules/
 # sensitive files
 accounts.json
 *.env
+
+# media downloads
+downloads/
+db/*.db
