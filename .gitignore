@@ -3,3 +3,7 @@ node_modules/
 
 # environment variables
 .env
+
+# sensitive files
+accounts.json
+*.env
